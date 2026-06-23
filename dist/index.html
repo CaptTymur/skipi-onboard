@@ -33,7 +33,9 @@
   .mod-tab { height:30px; display:flex; align-items:center; gap:7px; padding:0 14px; border-radius:7px;
     font-size:13px; font-weight:600; color:var(--text2); background:transparent; border:1px solid transparent; cursor:default; }
   .mod-tab.active { color:#fff; background:var(--accent); border-color:var(--accent); }
-  .mod-tab.ghost { color:var(--text2); opacity:.5; cursor:not-allowed; }
+  .mod-tab.locked { color:var(--text2); background:transparent; border:1px dashed var(--border); cursor:pointer; }
+  .mod-tab.locked:hover { color:var(--text); border-color:var(--accent); }
+  .mod-tab.locked .lock { font-size:11px; opacity:.8; margin-right:1px; }
   .bar-spacer { flex:1; }
   .bar-note { font-size:11.5px; color:var(--text2); white-space:nowrap; }
 
@@ -112,7 +114,7 @@
     </div>
     <div class="mod-tabs">
       <div class="mod-tab active">Apps</div>
-      <div class="mod-tab ghost" title="More onboard modules arrive after device pairing">Vessel · soon</div>
+      <div class="mod-tab locked" onclick="explainVesselLock()" title="The Vessel module unlocks after pairing with a vessel’s Skipi On Board node by QR."><span class="lock">🔒</span>Vessel · after pairing</div>
     </div>
     <div class="bar-spacer"></div>
     <div class="bar-note">Local preview · no server · no account</div>
@@ -315,6 +317,12 @@ function showApps(){
 }
 function appsSelect(id){ appsState.selectedId = id; showApps(); }
 function appsBack(){ appsState.selectedId = null; showApps(); }
+
+// The Vessel module is locked until the device is paired with a vessel's
+// Skipi On Board node (QR). The tab explains this rather than looking broken.
+function explainVesselLock(){
+  showToast('The Vessel module unlocks after pairing with a vessel’s Skipi On Board node by QR.');
+}
 
 // ---------- boot ----------
 document.getElementById('ver-tag').textContent = 'v'+APP_VERSION;
