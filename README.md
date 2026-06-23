@@ -32,6 +32,34 @@ QR encoder is vendored locally (offline, no CDN) — see `dist/vendor/README.md`
 
 UI reference (read-only): `../skipi-public` (Skipi Seafarer Apps host).
 
+## Plugin host (Apps module) — readiness H0–H3
+
+The **Apps** module is the plugin host surface. On Board hosts **reviewed,
+bundled first-party plugins** only — no marketplace, no remote code loading, no
+unsigned auto-update. Plugin internals are built/tested in the plugin lab; the
+home only registers a tile, manages local Install/Open/Disable state, mounts the
+plugin, and hands it a **narrow host API**.
+
+- Bundled artifacts live in `dist/plugins/<plugin-id>/` (`plugin.json`,
+  `index.js`, `index.css`, `checksums.json`, `CHANGELOG.md`, `REPORT.md`),
+  loaded at boot; each self-registers into `window.SkipiPlugins`.
+- Tile states: **Available / Installed / Disabled / Coming soon**. Install state
+  is local (`localStorage` `skipi-onboard-plugins`).
+- Host API given to a mounted plugin: `theme.get/subscribe`,
+  `storage.get/set/remove` (namespaced per plugin), `audio.playLoop/stop`
+  (no-op until a native bridge), `navigation.closePlugin/setTitle`,
+  `permissions.listGranted`.
+- Bundled demo fixture: `dist/plugins/onboard-host-check/` — verifies the host
+  contract only (not a product plugin).
+
+**Forbidden to plugins by default** (no host API exposes them): crew list,
+paired-device identities, vessel documents, vessel certificates, QR pairing
+secrets/challenges, admin/owner data, central-repository write, network. Any
+plugin needing vessel-doc / crew / pairing / report-submit access requires
+explicit permission and a separate review (host readiness level H4, not in this
+pass). QR pairing is a trust bootstrap, **not** a cryptographically secure
+plugin-authorization layer.
+
 ## Future onboard role (background, not this slice)
 
 The full On Board product is the ship's Skipi home: vessel info, watch schedule,
