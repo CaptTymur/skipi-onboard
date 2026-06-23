@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Skipi On Board",
+  "version": "0.1.0",
+  "identifier": "app.skipi.onboard",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Skipi On Board",
+        "width": 480,
+        "height": 860,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://api-ru.skipi.app/onboard/latest.json",
+        "https://api.skipi.app/onboard/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZFRTAxNUM4NEE2MzAxRkIKUldUN0FXTkt5QlhnL3VoV2hDWVJja3cwUlBGbFpvWGxnS2pHWFB3TVY0T3ZjS1FsZUtOSlhqOWMK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "publisher": "Tymur Rudov",
+    "copyright": "Copyright © 2026 Tymur Rudov. All rights reserved.",
+    "category": "Business",
+    "shortDescription": "United Seafarers - work-completion photo reports",
+    "longDescription": "Skipi - United Seafarers. Skipi On Board is the vessel-side app of the Skipi family. The crew captures work-completion reports by template — photos before/during/after, resources consumed, notes — and submits them to the office in one tap. Part of the Skipi maritime lifecycle suite.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
+  }
+}

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Skipi On Board - United Seafarers</title>
+<style>
+  :root { --bg:#0e1726; --card:#16223a; --line:#26344f; --ink:#e8eefc; --mut:#8aa0c6; --acc:#3a8bff; --ok:#27c08a; --warn:#e6a338; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; background:#0e1726ee; backdrop-filter:blur(6px); border-bottom:1px solid var(--line); padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:10; }
+  header b { font-size:16px; } header small { color:var(--mut); }
+  nav { display:flex; gap:6px; margin-left:auto; }
+  nav button { background:transparent; border:1px solid var(--line); color:var(--mut); border-radius:8px; padding:6px 10px; font-size:13px; }
+  nav button.on { color:var(--ink); border-color:var(--acc); }
+  main { padding:14px; max-width:720px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; }
+  label { display:block; color:var(--mut); font-size:12px; margin:10px 0 4px; }
+  input,select,textarea { width:100%; background:#0e1726; border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:10px; font-size:15px; }
+  textarea { min-height:70px; resize:vertical; }
+  .row { display:flex; gap:8px; } .row>* { flex:1; }
+  button.primary { background:var(--acc); border:none; color:#fff; border-radius:10px; padding:13px; font-size:16px; font-weight:600; width:100%; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:9px 12px; }
+  .tpl { display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--line); border-radius:12px; background:var(--card); margin-bottom:10px; }
+  .tpl .em { font-size:26px; } .tpl b { display:block; } .tpl span { color:var(--mut); font-size:12px; }
+  .slot { border:1px dashed var(--line); border-radius:10px; padding:10px; margin:8px 0; }
+  .slot .hd { display:flex; align-items:center; gap:8px; font-size:13px; }
+  .pill { font-size:10px; text-transform:uppercase; letter-spacing:.5px; padding:2px 7px; border-radius:20px; border:1px solid var(--line); color:var(--mut); }
+  .pill.before{color:#9ec1ff;border-color:#2c456e} .pill.during{color:var(--warn);border-color:#5a4420} .pill.after{color:var(--ok);border-color:#1f5a44}
+  .pill.req{color:#ff8e8e;border-color:#5a2626}
+  .thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .thumbs .t { position:relative; } .thumbs img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
+  .thumbs .x { position:absolute; top:-6px; right:-6px; background:#b23; color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; }
+  .ck { display:flex; align-items:center; gap:10px; padding:7px 0; } .ck input { width:20px; height:20px; }
+  .res { display:flex; gap:6px; margin:6px 0; } .res input { padding:8px; }
+  .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#16223a; border:1px solid var(--line); border-radius:10px; padding:10px 16px; max-width:90%; }
+  .toast.ok{border-color:var(--ok)} .toast.err{border-color:#b23}
+  .muted { color:var(--mut); font-size:13px; } .hide{display:none}
+  .sent { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .sent img { width:54px; height:54px; object-fit:cover; border-radius:8px; background:#0e1726; }
+  .badge { font-size:11px; padding:2px 8px; border-radius:20px; border:1px solid var(--line); color:var(--mut); }
+</style>
+</head>
+<body>
+<header>
+  <b>Skipi On&nbsp;Board</b><small id="vesselTag">Skipi - United Seafarers</small>
+  <nav>
+    <button data-v="new" class="on">New</button>
+    <button data-v="sent">Sent</button>
+    <button data-v="settings">⚙</button>
+  </nav>
+</header>
+<main>
+  <!-- NEW -->
+  <section id="v-new">
+    <div id="picker"><div class="muted">Loading templates…</div></div>
+    <div id="form" class="hide"></div>
+  </section>
+  <!-- SENT -->
+  <section id="v-sent" class="hide"><div class="card"><div id="sentList" class="muted">—</div></div></section>
+  <!-- SETTINGS -->
+  <section id="v-settings" class="hide">
+    <div class="card">
+      <label>Server URL</label><input id="s_url" placeholder="https://api.skipi.app" />
+      <label>On Board token</label><input id="s_token" placeholder="ONBOARD_TOKEN" />
+      <div class="row"><div><label>Vessel IMO</label><input id="s_imo" inputmode="numeric" /></div>
+        <div><label>Vessel name</label><input id="s_vessel" /></div></div>
+      <div class="row"><div><label>Your name</label><input id="s_name" /></div>
+        <div><label>Your rank</label><input id="s_rank" /></div></div>
+      <div style="margin-top:12px"><button class="primary" id="saveSettings">Save</button></div>
+      <p class="muted" id="connState" style="margin-top:10px"></p>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast hide"></div>
+
+<script>
+var TPLS = [], CUR = null, PHOTOS = []; // PHOTOS: {file,url,slot_key,label,phase}
+var EM = { cargo:"🚢", maintenance:"🛠️", "":"📋" };
+
+function cfg(){ try { return JSON.parse(localStorage.getItem("skipi_onboard")||"{}"); } catch(e){ return {}; } }
+function saveCfg(c){ localStorage.setItem("skipi_onboard", JSON.stringify(c)); }
+function api(path){ return (cfg().url||"").replace(/\/$/,"") + path; }
+function hdr(){ return { "Authorization":"Bearer "+(cfg().token||"") }; }
+function toast(m, k){ var t=document.getElementById("toast"); t.textContent=m; t.className="toast "+(k||""); setTimeout(function(){t.className="toast hide";}, 2600); }
+function el(tag, attrs, html){ var e=document.createElement(tag); if(attrs) for(var k in attrs) e.setAttribute(k,attrs[k]); if(html!=null) e.innerHTML=html; return e; }
+
+// ---- nav ----
+document.querySelectorAll("nav button").forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll("nav button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    ["new","sent","settings"].forEach(function(v){ document.getElementById("v-"+v).classList.toggle("hide", v!==b.dataset.v); });
+    if(b.dataset.v==="sent") loadSent();
+  };
+});
+
+// ---- settings ----
+function fillSettings(){ var c=cfg();
+  s_url.value=c.url||""; s_token.value=c.token||""; s_imo.value=c.imo||""; s_vessel.value=c.vessel||""; s_name.value=c.name||""; s_rank.value=c.rank||"";
+  document.getElementById("vesselTag").textContent = c.vessel? " · "+c.vessel : (c.imo? " · IMO "+c.imo : "");
+}
+document.getElementById("saveSettings").onclick=function(){
+  saveCfg({ url:s_url.value.trim(), token:s_token.value.trim(), imo:s_imo.value.trim(), vessel:s_vessel.value.trim(), name:s_name.value.trim(), rank:s_rank.value.trim() });
+  fillSettings(); toast("Saved","ok"); loadTemplates();
+};
+
+// ---- templates ----
+function loadTemplates(){
+  if(!cfg().url){ document.getElementById("picker").innerHTML='<div class="card muted">Set the server URL and token in ⚙ Settings first.</div>'; return; }
+  fetch(api("/api/report-templates")).then(function(r){return r.json();}).then(function(d){
+    TPLS=d.items||[]; renderPicker();
+    fetch(api("/health")).then(function(r){ document.getElementById("connState").textContent = r.ok?"Server reachable ✓":"Server error"; }).catch(function(){ document.getElementById("connState").textContent="Server unreachable"; });
+  }).catch(function(e){ document.getElementById("picker").innerHTML='<div class="card muted">Cannot reach server. Check ⚙ Settings.</div>'; });
+}
+function renderPicker(){
+  var p=document.getElementById("picker"); p.innerHTML=""; document.getElementById("form").classList.add("hide"); p.classList.remove("hide");
+  p.appendChild(el("div",{class:"muted"},"Choose what work you finished:"));
+  TPLS.forEach(function(t){
+    var d=el("div",{class:"tpl"}); d.innerHTML='<div class="em">'+(EM[t.category]||EM[""])+'</div><div><b>'+t.name+'</b><span>'+(t.category||"")+'</span></div>';
+    d.onclick=function(){ openForm(t); }; p.appendChild(d);
+  });
+  var free=el("div",{class:"tpl"}); free.innerHTML='<div class="em">✍️</div><div><b>Free report</b><span>no template</span></div>';
+  free.onclick=function(){ openForm(null); }; p.appendChild(free);
+}
+
+// ---- form ----
+function openForm(t){
+  CUR=t; PHOTOS=[]; var def = t? t.definition||{} : {};
+  document.getElementById("picker").classList.add("hide");
+  var f=document.getElementById("form"); f.classList.remove("hide"); f.innerHTML="";
+
+  var head=el("div",{class:"card"});
+  head.appendChild(el("div",{class:"row"},""));
+  head.innerHTML='<b>'+(t?t.name:"Free report")+'</b>';
+  var ttl=el("input",{id:"f_title",placeholder:"Short title (e.g. Hold 2 prep for grain)"});
+  var loc=el("input",{id:"f_loc",placeholder:"Location — hold / frame / space"});
+  head.appendChild(el("label",null,"Title")); head.appendChild(ttl);
+  head.appendChild(el("label",null,"Location on vessel")); head.appendChild(loc);
+  f.appendChild(head);
+
+  // photo slots
+  var pc=el("div",{class:"card"}); pc.appendChild(el("b",null,"Photos"));
+  var slots = def.photo_slots || [ {key:"before",label:"Before",phase:"before",required:true},{key:"during",label:"During",phase:"during"},{key:"after",label:"After",phase:"after",required:true} ];
+  slots.forEach(function(s){ pc.appendChild(slotEl(s)); });
+  // extra
+  var ex=el("div",{class:"slot"}); ex.innerHTML='<div class="hd"><span class="pill">extra</span> Additional photos</div>';
+  ex.appendChild(fileInput({key:null,phase:"other",label:"Extra"})); pc.appendChild(ex);
+  f.appendChild(pc);
+
+  // checklist
+  if(def.checklist && def.checklist.length){
+    var cc=el("div",{class:"card"}); cc.appendChild(el("b",null,"Checklist")); cc.id="f_check";
+    def.checklist.forEach(function(c){ var w=el("label",{class:"ck"}); var i=el("input",{type:"checkbox"}); i.dataset.key=c.key; i.dataset.label=c.label;
+      w.appendChild(i); w.appendChild(el("span",null,c.label)); cc.appendChild(w); });
+    f.appendChild(cc);
+  }
+
+  // resources
+  var rc=el("div",{class:"card"}); rc.innerHTML='<b>Resources used</b>'; rc.id="f_res";
+  var rows=el("div",{id:"resRows"}); rc.appendChild(rows);
+  (def.resource_hints||[{kind:"manhours",label:"Man-hours",unit:"h"}]).forEach(function(h){ rows.appendChild(resRow(h)); });
+  var add=el("button",{class:"ghost"},"+ add line"); add.onclick=function(){ rows.appendChild(resRow({})); }; rc.appendChild(add);
+  f.appendChild(rc);
+
+  // template fields
+  if(def.fields && def.fields.length){
+    var fc=el("div",{class:"card"}); fc.innerHTML='<b>Details</b>'; fc.id="f_fields";
+    def.fields.forEach(function(fl){ fc.appendChild(el("label",null,fl.label)); var i=el("input",{type:fl.type==="number"?"number":"text"}); i.dataset.key=fl.key; fc.appendChild(i); });
+    f.appendChild(fc);
+  }
+
+  // notes + actions
+  var nc=el("div",{class:"card"}); nc.innerHTML='<label>Notes</label>'; var nt=el("textarea",{id:"f_notes",placeholder:"Anything the office should know…"}); nc.appendChild(nt); f.appendChild(nc);
+  var act=el("div",{class:"card"});
+  var sub=el("button",{class:"primary"},"Submit report"); sub.onclick=submit; act.appendChild(sub);
+  var bk=el("button",{class:"ghost",style:"margin-top:8px;width:100%"},"← back"); bk.onclick=renderPicker; act.appendChild(bk);
+  f.appendChild(act);
+  window.scrollTo(0,0);
+}
+function slotEl(s){
+  var d=el("div",{class:"slot"});
+  var hd=el("div",{class:"hd"});
+  hd.appendChild(el("span",{class:"pill "+(s.phase||"")},(s.phase||"photo")));
+  if(s.required) hd.appendChild(el("span",{class:"pill req"},"required"));
+  hd.appendChild(el("span",null," "+s.label));
+  d.appendChild(hd); d.appendChild(fileInput(s)); d.appendChild(el("div",{class:"thumbs","data-slot":s.key||""},"")); return d;
+}
+function fileInput(s){
+  var i=el("input",{type:"file",accept:"image/*",capture:"environment",multiple:"multiple"});
+  i.onchange=function(){ Array.prototype.forEach.call(i.files,function(file){
+    var rec={file:file,url:URL.createObjectURL(file),slot_key:s.key||null,label:s.label||"",phase:s.phase||"other"}; PHOTOS.push(rec); addThumb(rec);
+  }); i.value=""; };
+  return i;
+}
+function addThumb(rec){
+  var box = document.querySelector('.thumbs[data-slot="'+(rec.slot_key||"")+'"]');
+  if(!box){ box=document.querySelectorAll(".thumbs"); box=box[box.length-1]; }
+  var t=el("div",{class:"t"}); var im=el("img",{src:rec.url}); var x=el("button",{class:"x"},"×");
+  x.onclick=function(){ PHOTOS=PHOTOS.filter(function(p){return p!==rec;}); t.remove(); };
+  t.appendChild(im); t.appendChild(x); box.appendChild(t);
+}
+function resRow(h){
+  var r=el("div",{class:"res"});
+  var item=el("input",{placeholder:"item",value:h.label||""}); item.dataset.f="item";
+  var kind=el("input",{placeholder:"kind",value:h.kind||""}); kind.dataset.f="kind"; kind.style.maxWidth="80px";
+  var qty=el("input",{placeholder:"qty",inputmode:"decimal"}); qty.dataset.f="qty"; qty.style.maxWidth="64px";
+  var unit=el("input",{placeholder:"unit",value:h.unit||""}); unit.dataset.f="unit"; unit.style.maxWidth="56px";
+  r.appendChild(item); r.appendChild(qty); r.appendChild(unit); r.appendChild(kind); return r;
+}
+
+function collect(){
+  var c=cfg(); var def = CUR? CUR.definition||{} : {};
+  var checklist=[]; var cc=document.getElementById("f_check");
+  if(cc) cc.querySelectorAll("input[type=checkbox]").forEach(function(i){ checklist.push({key:i.dataset.key,label:i.dataset.label,done:i.checked}); });
+  var resources=[]; var rr=document.getElementById("resRows");
+  if(rr) rr.querySelectorAll(".res").forEach(function(row){ var o={}; row.querySelectorAll("input").forEach(function(i){ var v=i.value.trim(); if(v) o[i.dataset.f]= i.dataset.f==="qty"? parseFloat(v): v; }); if(o.item||o.qty) resources.push(o); });
+  var fields={}; var ff=document.getElementById("f_fields");
+  if(ff) ff.querySelectorAll("input").forEach(function(i){ if(i.value.trim()) fields[i.dataset.key]=i.value.trim(); });
+  return {
+    imo: c.imo? parseInt(c.imo,10): null, vessel_name: c.vessel||null,
+    template_id: CUR? CUR.id: null, template_version: CUR? CUR.version: null,
+    work_type: CUR? CUR.name: "Work report",
+    title: document.getElementById("f_title").value.trim()||null,
+    location: document.getElementById("f_loc").value.trim()||null,
+    performed_by: c.name||null, performed_by_rank: c.rank||null,
+    notes: document.getElementById("f_notes").value.trim()||null,
+    resources:resources, checklist:checklist, fields:fields,
+    performed_at: new Date().toISOString(), channel:"online"
+  };
+}
+
+function submit(){
+  if(!cfg().url||!cfg().token){ toast("Set server & token in ⚙","err"); return; }
+  var body=collect();
+  // required-photo guard
+  var def = CUR? CUR.definition||{} : {};
+  var missing=(def.photo_slots||[]).filter(function(s){return s.required && !PHOTOS.some(function(p){return p.slot_key===s.key;});});
+  if(missing.length){ toast("Missing required photo: "+missing[0].label,"err"); return; }
+  toast("Submitting…");
+  fetch(api("/api/reports"),{method:"POST",headers:Object.assign({"Content-Type":"application/json"},hdr()),body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error("create "+r.status); return r.json(); })
+    .then(function(rep){ return uploadPhotos(rep.id).then(function(){ return rep; }); })
+    .then(function(rep){ toast("Report sent ✓ ("+PHOTOS.length+" photos)","ok"); PHOTOS=[]; renderPicker(); })
+    .catch(function(e){ toast("Failed: "+e.message,"err"); });
+}
+function uploadPhotos(id){
+  var chain=Promise.resolve();
+  PHOTOS.forEach(function(p){
+    chain=chain.then(function(){
+      var fd=new FormData(); fd.append("file",p.file); fd.append("phase",p.phase||"other");
+      if(p.slot_key) fd.append("slot_key",p.slot_key);
+      return fetch(api("/api/reports/"+id+"/photos"),{method:"POST",headers:hdr(),body:fd}).then(function(r){ if(!r.ok) throw new Error("photo "+r.status); });
+    });
+  });
+  return chain;
+}
+
+// ---- sent ----
+function loadSent(){
+  var c=cfg(); if(!c.url){ document.getElementById("sentList").textContent="Configure server first."; return; }
+  var q = c.imo? "?imo="+encodeURIComponent(c.imo)+"&limit=30" : "?limit=30";
+  fetch(api("/api/reports"+q),{headers:hdr()}).then(function(r){return r.json();}).then(function(d){
+    var L=document.getElementById("sentList"); var items=d.items||[];
+    if(!items.length){ L.textContent="No reports sent yet."; return; }
+    L.innerHTML=""; items.forEach(function(it){
+      var row=el("div",{class:"sent"});
+      var im=el("img"); if(it.thumbnail_url) im.src=api(it.thumbnail_url); row.appendChild(im);
+      row.appendChild(el("div",null,'<b>'+(it.title||it.work_type||"Report")+'</b><div class="muted">'+(it.location||"")+' · '+(it.performed_at||it.created_at||"").slice(0,10)+'</div><span class="badge">'+it.status+'</span> <span class="badge">'+it.photo_count+' 📷</span>'));
+      L.appendChild(row);
+    });
+  }).catch(function(){ document.getElementById("sentList").textContent="Cannot load."; });
+}
+
+// ---- boot ----
+fillSettings(); loadTemplates();
+</script>
+</body>
+</html>
