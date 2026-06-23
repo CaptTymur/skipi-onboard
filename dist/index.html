@@ -92,6 +92,38 @@
   .btn { font-size:14px; font-weight:700; border-radius:9px; padding:11px 18px; border:1px solid var(--border); cursor:pointer; }
   .btn-outline { background:var(--surface); color:var(--text2); }
   .btn-outline[disabled] { cursor:not-allowed; opacity:.7; }
+  .btn-accent { background:var(--accent); color:#fff; border:1px solid var(--accent); }
+  .btn-accent:hover { background:var(--accent-strong); }
+  .btn-sm { padding:5px 11px; font-size:12px; }
+
+  /* ---- pairing panel ---- */
+  .apps-head-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .pair-cta { font-size:13px; font-weight:700; color:#fff; background:var(--accent); border:1px solid var(--accent);
+    border-radius:9px; padding:9px 14px; cursor:pointer; white-space:nowrap; }
+  .pair-cta:hover { background:var(--accent-strong); }
+  .pair-screen { max-width:900px; }
+  .pair-grid { display:grid; grid-template-columns:300px 1fr; gap:26px; margin-top:18px; align-items:start; }
+  .pair-qr-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px;
+    display:flex; flex-direction:column; align-items:center; gap:13px; }
+  .pair-qr-img { width:248px; height:248px; image-rendering:pixelated; border-radius:6px; background:#fff; }
+  .pair-qr-missing { width:248px; height:248px; display:flex; align-items:center; justify-content:center;
+    color:var(--text2); font-size:13px; text-align:center; border:1px dashed var(--border); border-radius:6px; padding:14px; }
+  .pair-countdown { font-size:13px; font-weight:700; color:var(--text2); font-variant-numeric:tabular-nums; }
+  .pair-expired { color:#b3402a; }
+  .pair-side { min-width:0; }
+  .pair-meta { display:flex; gap:10px; font-size:12.5px; padding:3px 0; }
+  .pair-meta-k { color:var(--text2); width:56px; flex:0 0 auto; }
+  .pair-meta-v { color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; word-break:break-all; }
+  .pair-scopes { margin:13px 0 4px; }
+  .pair-scopes-t { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--text2); margin-bottom:8px; }
+  .pair-scope { display:inline-block; font-size:11.5px; color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--accent-bg2); border-radius:999px; padding:3px 9px; margin:0 5px 5px 0; }
+  .pair-payload-head { display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--text2); }
+  .pair-payload { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px;
+    font-size:11.5px; line-height:1.45; color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace;
+    white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto; margin:0; }
+  @media (max-width:780px){ .pair-grid { grid-template-columns:1fr; } }
 
   /* ---- footer strip ---- */
   .plat-strip { flex-shrink:0; border-top:1px solid var(--border); background:var(--surface);
@@ -114,7 +146,7 @@
     </div>
     <div class="mod-tabs">
       <div class="mod-tab active">Apps</div>
-      <div class="mod-tab locked" onclick="explainVesselLock()" title="The Vessel module unlocks after pairing with a vessel’s Skipi On Board node by QR."><span class="lock">🔒</span>Vessel · after pairing</div>
+      <div class="mod-tab locked" onclick="openPairing()" title="Locked until a crew device is paired. Click to open pairing and show the vessel QR."><span class="lock">🔒</span>Vessel · after pairing</div>
     </div>
     <div class="bar-spacer"></div>
     <div class="bar-note">Local preview · no server · no account</div>
@@ -135,6 +167,8 @@
 
   <div id="toast" class="toast"></div>
 
+<!-- Local QR encoder (offline, no CDN). Provenance: dist/vendor/README.md -->
+<script src="./vendor/qrcode-generator.js"></script>
 <script>
 var APP_VERSION = '0.1.0';
 
@@ -261,7 +295,8 @@ function appsTileHtml(a){
 
 function appsListHtml(){
   var h = '<div class="apps-screen">';
-  h += '<div class="apps-head"><div class="apps-head-title">Apps</div>'
+  h += '<div class="apps-head"><div class="apps-head-row"><div class="apps-head-title">Apps</div>'
+     + '<button class="pair-cta" type="button" onclick="openPairing()">🔗 Pair crew device</button></div>'
      + '<div class="apps-head-sub">Official Skipi tools inside your On&nbsp;Board home. Not a marketplace and no third-party code. '
      + 'Most are seeds of the onboard product — they become active once device pairing and the ship node land. '
      + 'The ship’s node never receives a seafarer’s full personal vault — only the onboard workflow that is explicitly shared.</div></div>';
@@ -308,7 +343,10 @@ function appsDetailHtml(app){
 }
 
 // ---------- view control ----------
+var appView = 'apps'; // 'apps' | 'pairing'
 function showApps(){
+  stopPairingTimer();
+  appView = 'apps';
   var content = document.getElementById('scr-content');
   if(!content) return;
   if(appsState.selectedId) content.innerHTML = appsDetailHtml(appsById(appsState.selectedId));
@@ -318,10 +356,150 @@ function showApps(){
 function appsSelect(id){ appsState.selectedId = id; showApps(); }
 function appsBack(){ appsState.selectedId = null; showApps(); }
 
-// The Vessel module is locked until the device is paired with a vessel's
-// Skipi On Board node (QR). The tab explains this rather than looking broken.
-function explainVesselLock(){
-  showToast('The Vessel module unlocks after pairing with a vessel’s Skipi On Board node by QR.');
+// ===================== QR pairing (Stage 1 — On Board is the QR issuer) =====================
+// On Board shows a one-time, expiring pairing invite as a QR. Crew scan it from
+// Skipi Seafarer to connect to this vessel's onboard node. Stage 1 is local-only:
+// no backend, no relay, no real handshake, no paired-device DB. The invite is a
+// real structured payload v1 (forward-compatible with future keys/signatures).
+// QR is rendered fully offline via the vendored encoder (dist/vendor/).
+// Refs (Obsidian): "Skipi Device Pairing — QR sync and Onboard exchange",
+//   "2026-06-23 — Skipi Onboard ↔ Seafarer QR pairing — coordination protocol".
+
+var PAIRING_SCOPES = [
+  'vessel_profile.read', 'watch_schedule.read', 'announcements.read',
+  'checklists.read', 'familiarization.read', 'reports.submit', 'signals.submit'
+];
+var INVITE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+var pairing = { invite:null, timer:null };
+
+function randHex(nbytes){
+  var a = new Uint8Array(nbytes);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  var s = '';
+  for(var i=0;i<a.length;i++){ s += ('0'+a[i].toString(16)).slice(-2); }
+  return s;
+}
+// Stable per-install node id (no PII). Persists in localStorage for the MVP.
+function onboardNodeId(){
+  var k = 'skipi-onboard-node-id', v = null;
+  try { v = localStorage.getItem(k); } catch(e){}
+  if(!v){ v = 'onb_' + randHex(8); try { localStorage.setItem(k, v); } catch(e){} }
+  return v;
+}
+function buildInvite(){
+  var created = new Date();
+  var expires = new Date(created.getTime() + INVITE_TTL_MS);
+  return {
+    v: 1,
+    type: 'skipi.onboard.pairing.invite',
+    product: 'skipi-onboard',
+    node_type: 'onboard_node',
+    node_id: onboardNodeId(),
+    node_name: 'Skipi On Board',
+    vessel: { name: null, imo: null, callsign: null },
+    invite_id: 'inv_' + randHex(8),
+    challenge: randHex(16),
+    created_at: created.toISOString(),
+    expires_at: expires.toISOString(),
+    allowed_scopes: PAIRING_SCOPES.slice(),
+    transport: { kind: 'local-preview', url: null }
+  };
+}
+function qrDataUrl(text){
+  if(typeof qrcode === 'undefined') return null;
+  try {
+    var q = qrcode(0, 'M'); // type 0 = auto-fit, EC level M
+    q.addData(text);
+    q.make();
+    return q.createDataURL(6, 4); // cellSize, margin (rendered at high-res, scaled via CSS)
+  } catch(e){ return null; }
+}
+
+function openPairing(){
+  appView = 'pairing';
+  pairing.invite = buildInvite();
+  renderPairing();
+}
+function regenerateInvite(){
+  pairing.invite = buildInvite();
+  renderPairing();
+}
+function closePairing(){ showApps(); }
+
+function renderPairing(){
+  var content = document.getElementById('scr-content');
+  if(!content) return;
+  var inv = pairing.invite;
+  var pretty = JSON.stringify(inv, null, 2);
+  var compact = JSON.stringify(inv);
+  var durl = qrDataUrl(compact);
+  var qrHtml = durl
+    ? '<img class="pair-qr-img" alt="Pairing invite QR" src="'+durl+'">'
+    : '<div class="pair-qr-missing">QR encoder failed to load. Use the payload preview below.</div>';
+
+  var h = '<div class="apps-screen pair-screen">';
+  h += '<button class="apps-back" type="button" onclick="closePairing()">← Apps</button>';
+  h += '<div class="apps-head"><div class="apps-head-title">Pair a crew device</div>'
+     + '<div class="apps-head-sub">Crew open <b>Skipi Seafarer</b> and scan this code to connect their device to this vessel’s On&nbsp;Board node. '
+     + 'Their <b>Vessel / Onboard</b> module unlocks only after they confirm on their side.</div></div>';
+
+  h += '<div class="pair-grid">';
+  // left — QR + countdown + regenerate
+  h += '<div class="pair-qr-card">' + qrHtml
+     + '<div class="pair-countdown" id="pair-countdown"></div>'
+     + '<button class="btn btn-accent" type="button" onclick="regenerateInvite()">↻ Regenerate invite</button>'
+     + '</div>';
+  // right — metadata, scopes, privacy, payload preview
+  h += '<div class="pair-side">';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Node</span><span class="pair-meta-v">'+esc(inv.node_id)+'</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Invite</span><span class="pair-meta-v">'+esc(inv.invite_id)+'</span></div>';
+  h += '<div class="pair-scopes"><div class="pair-scopes-t">Allowed scopes</div>';
+  for(var i=0;i<inv.allowed_scopes.length;i++){ h += '<span class="pair-scope">'+esc(inv.allowed_scopes[i])+'</span>'; }
+  h += '</div>';
+  h += '<div class="apps-note"><b>Privacy</b> — this QR contains <b>no personal data</b>. It is a one-time, expiring invite; '
+     + 'it does <b>not</b> give On&nbsp;Board access to a seafarer’s vault. Data moves only later, scoped and with the seafarer’s explicit consent.</div>';
+  h += '<div class="pair-payload-head"><span>Invite payload v1 (dev preview)</span>'
+     + '<button class="btn btn-outline btn-sm" type="button" onclick="copyPayload()">Copy</button></div>';
+  h += '<pre class="pair-payload" id="pair-payload">'+esc(pretty)+'</pre>';
+  h += '</div>'; // pair-side
+  h += '</div>'; // pair-grid
+  h += '</div>';
+
+  content.innerHTML = h;
+  document.querySelector('main').scrollTop = 0;
+  startPairingTimer();
+}
+
+function startPairingTimer(){
+  stopPairingTimer();
+  updateCountdown();
+  pairing.timer = setInterval(updateCountdown, 1000);
+}
+function stopPairingTimer(){
+  if(pairing && pairing.timer){ clearInterval(pairing.timer); pairing.timer = null; }
+}
+function updateCountdown(){
+  var el = document.getElementById('pair-countdown');
+  if(!el || !pairing.invite){ stopPairingTimer(); return; }
+  var ms = new Date(pairing.invite.expires_at).getTime() - Date.now();
+  if(ms <= 0){ el.innerHTML = '<span class="pair-expired">Invite expired — regenerate</span>'; stopPairingTimer(); return; }
+  var total = Math.floor(ms/1000), m = Math.floor(total/60), s = total % 60;
+  el.textContent = 'Expires in ' + m + ':' + ('0'+s).slice(-2);
+}
+function copyPayload(){
+  if(!pairing.invite) return;
+  var txt = JSON.stringify(pairing.invite, null, 2);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ showToast('Payload copied'); }, function(){ fallbackCopy(txt); });
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    showToast('Payload copied');
+  } catch(e){ showToast('Copy not available'); }
 }
 
 // ---------- boot ----------
