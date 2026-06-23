@@ -3,21 +3,32 @@
 **Skipi - United Seafarers.** The vessel-side home of the **Skipi** family
 (alongside Skipi Seafarer, Crewing, Broker, Management).
 
-## Current slice — Apps-only desktop shell (2026-06-23)
+## Current slice — three-module desktop shell (2026-06-23)
 
-The first desktop slice is an **Apps home**: a calm, light-theme shell in the
-visual family of Skipi Seafarer, with a single module — **Apps**. It is a
-local/static registry of official onboard tools shown as a tile shelf, the seed
-of the future Skipi applications/plugins layer.
+A calm, light-theme desktop shell in the visual family of Skipi Seafarer, with a
+top modules-bar of three base modules:
 
-- desktop / Linux only;
-- light theme by default, petrol accent `#004564`, top modules-bar;
-- one module: **Apps**, as the first screen (not a landing page);
-- **no server, no account, no personal data, no marketplace, no third-party runtime**;
-- each tile is *Coming soon* with a detail screen explaining its future onboard role.
+- **Crew** — the people linked to this vessel + the QR **pairing** flow (default
+  screen). Crew scan a one-time, expiring QR from Skipi Seafarer to connect their
+  device. Placeholder stat cards (total crew / paired devices / pending invites /
+  recent onboarding) and a "No linked crew yet" empty state. The invite is a real
+  structured payload v1; the QR is generated fully offline (vendored encoder).
+- **Apps** — the onboard applications/plugins registry (list + detail). A
+  local/static shelf of official onboard tools, each *Coming soon* with a detail
+  screen explaining its future role.
+- **Vessel Documents** — a scaffold preview of the ship's document vault
+  (Certificates · Manuals · Safety Management · Checklists/Forms · Cargo/Voyage
+  docs), all *Coming soon*.
 
-Seed tiles: Watch Schedule · Announcements · Checklists · Familiarization ·
+Constraints: desktop / Linux only; light theme, petrol accent `#004564`;
+**no server, no account, no personal data, no marketplace, no third-party
+runtime, no real crew DB, no real document vault**. QR contains no PII and gives
+On Board no access to a seafarer's vault.
+
+Apps seed tiles: Watch Schedule · Announcements · Checklists · Familiarization ·
 Photo Reports · Safety Reports · BNWAS / Time Anchor · Distance Tables · Draft Survey.
+
+QR encoder is vendored locally (offline, no CDN) — see `dist/vendor/README.md`.
 
 UI reference (read-only): `../skipi-public` (Skipi Seafarer Apps host).
 
@@ -56,5 +67,7 @@ cargo tauri build         # desktop bundle
 
 ## Status
 
-Apps-only desktop MVP shell (2026-06-23). Static preview, no backend. TODO:
-device pairing (QR), live onboard modules, then per-app runtimes.
+Three-module desktop shell — Crew / Apps / Vessel Documents (2026-06-23). Static
+preview, no backend. QR pairing is Stage 1 (On Board is the QR issuer; the
+Seafarer scanner is a separate later stage). TODO: real crew/device linking,
+live onboard modules, document vault, per-app runtimes.
