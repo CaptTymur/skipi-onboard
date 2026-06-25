@@ -330,10 +330,11 @@ function appsListHtml(){
      + '<div class="apps-head-sub">Onboard tools for this vessel — official Skipi applications, not a marketplace and no third-party code. '
      + 'Most are seeds of the onboard product and become active once device pairing and the ship node land. '
      + '(Crew pairing lives in the <b>Crew</b> module.)</div></div>';
-  // Plugins section — bundled first-party plugins with real Install/Open/Disable state.
-  var pluginIds = bundledPluginIds();
+  // Plugins section — bundled first-party plugins with real Install/Open/Disable
+  // state. Dev-only self-test fixtures are hidden unless developer mode is on.
+  var pluginIds = catalogPluginIds();
   if(pluginIds.length){
-    h += '<div class="apps-cat-title">Plugins</div><div class="apps-grid">';
+    h += '<div class="apps-cat-title">Plugins'+(isDevMode()?' <span class="apps-badge disabled">dev</span>':'')+'</div><div class="apps-grid">';
     for(var pi=0;pi<pluginIds.length;pi++){ h += pluginTileHtml(pluginIds[pi]); }
     h += '</div>';
   }
@@ -635,19 +636,67 @@ var SkipiPlugins = (window.SkipiPlugins = window.SkipiPlugins || {});
 // Reviewed bundled artifacts shipped in dist/plugins/<id>/ (loaded at boot).
 var BUNDLED_PLUGIN_DIRS = { 'onboard-host-check': './plugins/onboard-host-check' };
 var activePlugin = null;   // { id, instance } while a plugin is mounted
-var pluginCssEl = null;    // injected <link> for the active plugin's stylesheet
+var pluginCssEl = null;    // injected <style>/<link> for the active plugin's stylesheet
+var pluginIntegrity = {};  // id -> { ok:bool, cssText:string, reason:string }
 
 function bundledPluginIds(){ return Object.keys(BUNDLED_PLUGIN_DIRS).filter(function(id){ return !!SkipiPlugins[id]; }); }
 function isBundledPlugin(id){ return !!(BUNDLED_PLUGIN_DIRS[id] && SkipiPlugins[id]); }
+// Catalog = installable plugins shown to the user. Dev-only fixtures stay
+// bundled (internal self-test) but are hidden unless developer mode is on.
+function catalogPluginIds(){
+  return bundledPluginIds().filter(function(id){
+    var m = SkipiPlugins[id] && SkipiPlugins[id].manifest;
+    return !(m && m.dev_only) || isDevMode();
+  });
+}
+
+// ---- integrity gate: verify checksums.json before executing a bundled plugin.
+// Lightweight (corruption / partial-bundle guard), NOT a substitute for the
+// Stage-2 signed-pack model. We hash exactly what we fetch and only run/register
+// a plugin whose index.js / index.css / plugin.json all match checksums.json.
+function fetchText(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status+' '+u); return r.text(); }); }
+function fetchJson(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status+' '+u); return r.json(); }); }
+function sha256Hex(text){
+  var enc = new TextEncoder().encode(text);
+  return crypto.subtle.digest('SHA-256', enc).then(function(buf){
+    var a = Array.prototype.slice.call(new Uint8Array(buf));
+    return a.map(function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+  });
+}
+function verifyChecksum(text, expected){ return sha256Hex(text).then(function(h){ return ('sha256:'+h) === expected; }); }
 
 function loadBundledPlugins(){
-  Object.keys(BUNDLED_PLUGIN_DIRS).forEach(function(id){
-    var s = document.createElement('script');
-    s.src = BUNDLED_PLUGIN_DIRS[id] + '/index.js';
-    s.async = false;
-    s.onload = function(){ if(currentModule==='apps' && !activePlugin && !appsState.selectedId) renderApps(); };
-    s.onerror = function(){ /* missing/blocked artifact — host stays usable */ };
-    document.head.appendChild(s);
+  var ids = Object.keys(BUNDLED_PLUGIN_DIRS);
+  var chain = Promise.resolve();
+  ids.forEach(function(id){ chain = chain.then(function(){ return loadOneBundledPlugin(id); }); });
+  chain.then(function(){ if(currentModule==='apps' && !activePlugin && !appsState.selectedId) renderApps(); });
+}
+function loadOneBundledPlugin(id){
+  var dir = BUNDLED_PLUGIN_DIRS[id];
+  return Promise.all([
+    fetchJson(dir+'/checksums.json'), fetchText(dir+'/index.js'),
+    fetchText(dir+'/index.css'), fetchText(dir+'/plugin.json')
+  ]).then(function(res){
+    var checks=res[0], jsText=res[1], cssText=res[2], jsonText=res[3];
+    return Promise.all([
+      verifyChecksum(jsText, checks['index.js']),
+      verifyChecksum(cssText, checks['index.css']),
+      verifyChecksum(jsonText, checks['plugin.json'])
+    ]).then(function(oks){
+      if(!(oks[0] && oks[1] && oks[2])){
+        pluginIntegrity[id] = { ok:false, reason:'checksum mismatch' };
+        if(typeof console!=='undefined') console.warn('[plugin] integrity check FAILED for '+id+' — not loaded');
+        return;
+      }
+      pluginIntegrity[id] = { ok:true, cssText:cssText };
+      // Execute exactly the verified bytes (inline, not src) so a tampered file
+      // cannot be substituted between hashing and execution.
+      var s = document.createElement('script'); s.setAttribute('data-plugin-js', id); s.textContent = jsText;
+      document.head.appendChild(s);
+    });
+  }).catch(function(e){
+    pluginIntegrity[id] = { ok:false, reason:''+e };
+    if(typeof console!=='undefined') console.warn('[plugin] failed to load '+id+': '+e);
   });
 }
 
@@ -665,9 +714,10 @@ function pluginTileHtml(id){
   var badge = st==='installed' ? '<span class="apps-badge installed">Installed</span>'
             : st==='disabled'  ? '<span class="apps-badge disabled">Disabled</span>'
             :                    '<span class="apps-badge avail">Available</span>';
+  var devTag = m.dev_only ? ' <span class="apps-badge disabled">dev</span>' : '';
   return '<button class="apps-tile" type="button" onclick="appsSelect(\''+id+'\')">'
     + '<span class="apps-tile-icon">'+(m.icon||'🧩')+'</span>'
-    + '<span class="apps-tile-body"><span class="apps-tile-name">'+esc(m.name||id)+'</span>'
+    + '<span class="apps-tile-body"><span class="apps-tile-name">'+esc(m.name||id)+devTag+'</span>'
     + '<span class="apps-tile-sub">'+esc(m.short||'')+'</span>'+badge+'</span></button>';
 }
 
@@ -747,9 +797,15 @@ function pluginOpen(id){
 
 function injectPluginCss(id){
   removePluginCss();
-  var l = document.createElement('link');
-  l.rel='stylesheet'; l.href = BUNDLED_PLUGIN_DIRS[id] + '/index.css'; l.setAttribute('data-plugin-css', id);
-  document.head.appendChild(l); pluginCssEl = l;
+  var integ = pluginIntegrity[id];
+  var el;
+  if(integ && integ.ok && integ.cssText != null){
+    // use the verified stylesheet bytes
+    el = document.createElement('style'); el.setAttribute('data-plugin-css', id); el.textContent = integ.cssText;
+  } else {
+    el = document.createElement('link'); el.rel='stylesheet'; el.href = BUNDLED_PLUGIN_DIRS[id] + '/index.css'; el.setAttribute('data-plugin-css', id);
+  }
+  document.head.appendChild(el); pluginCssEl = el;
 }
 function removePluginCss(){ if(pluginCssEl){ try { pluginCssEl.remove(); } catch(e){} pluginCssEl=null; } }
 
@@ -810,8 +866,28 @@ function makeHostApi(pluginId){
   };
 }
 
+// ---------- developer mode (hidden toggle: 5 clicks on the version tag) ----------
+// Dev mode reveals dev-only host fixtures (e.g. onboard-host-check) in the Apps
+// catalog. Off by default for normal users; no effect on real plugins.
+function isDevMode(){ try { return localStorage.getItem('skipi-onboard-dev')==='1'; } catch(e){ return false; } }
+function setDevMode(on){
+  try { if(on) localStorage.setItem('skipi-onboard-dev','1'); else localStorage.removeItem('skipi-onboard-dev'); } catch(e){}
+  updateVerTag();
+  showToast('Developer mode '+(on?'on':'off'));
+  if(currentModule==='apps' && !activePlugin){ appsState.selectedId=null; renderApps(); }
+}
+function updateVerTag(){ var el=document.getElementById('ver-tag'); if(el) el.textContent='v'+APP_VERSION+(isDevMode()?' · dev':''); }
+var _verClicks=0, _verTimer=null;
+function verTagClick(){
+  _verClicks++;
+  if(_verTimer) clearTimeout(_verTimer);
+  _verTimer=setTimeout(function(){ _verClicks=0; }, 2500);
+  if(_verClicks>=5){ _verClicks=0; setDevMode(!isDevMode()); }
+}
+
 // ---------- boot ----------
-document.getElementById('ver-tag').textContent = 'v'+APP_VERSION;
+updateVerTag();
+(function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
 loadBundledPlugins();
 showModule('crew');
 </script>

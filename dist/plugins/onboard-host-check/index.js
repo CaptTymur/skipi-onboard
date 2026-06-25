@@ -20,6 +20,7 @@
     short: 'Demo fixture that verifies the On Board plugin host contract.',
     description: 'A tiny first-party demo plugin used to verify the On Board plugin host. It reads the host theme, persists a counter through the sandboxed host storage, sets the plugin title and closes itself via the host navigation API. It has no access to crew, vessel documents, certificates, pairing secrets or the network.',
     distribution: { mode: 'bundled_first_party', bundled: true, remote_code: false },
+    dev_only: true,
     hosts: ['onboard'],
     permissions: ['local_storage'],
     capabilities: { network: 'none', documents: 'none', account: 'none', analytics: 'none', server_upload: false },
