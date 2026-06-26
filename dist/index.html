@@ -509,6 +509,16 @@ var settingsState = { inviteShown:false, returnTo:'crew' };
 // Whether a crew backend is wired. Hard-false in this UI shell — On Board makes
 // no crew API calls. Flip only when the crew API actually exists.
 var CREW_API_CONNECTED = false;
+// Planned crew-membership backend namespace (NOT device pairing, NOT /api/devices/*).
+// On Board makes NO calls yet — this is the contract to wire when CREW_API_CONNECTED.
+// Refs: handoff "2026-06-26 — On Board Crew Onboarding v1" + "2026-06-25 — Backend
+// design — On Board Crew Linking v1". Crew invite namespace: skipi-crew:1:onboard:<code>.
+var ONBOARD_CREW_API = {
+  invite: 'POST /api/onboard/crew/invite',       // create short-lived invite -> { code, expires_at }
+  accept: 'POST /api/onboard/crew/accept',       // seafarer accepts (signed identity) — Seafarer side
+  list:   'GET /api/onboard/crew?vessel_imo=…',  // roster for this vessel
+  revoke: 'DELETE /api/onboard/crew/{id}'        // revoke a crew member
+};
 
 function showSettings(){
   stopPairingTimer();
@@ -522,6 +532,13 @@ function showSettings(){
 }
 function closeSettings(){ showModule(settingsState.returnTo || 'crew'); }
 function toggleCrewInvite(){ settingsState.inviteShown = !settingsState.inviteShown; renderSettings(); }
+// Honest disabled "future" card (Phase 2-4). body is trusted static HTML.
+function setFutureCard(icon, title, body){
+  return '<div class="set-card set-disabled" style="margin-top:10px">'
+    + '<div class="set-pill">Future · API не подключён</div>'
+    + '<div class="set-sec-title" style="margin:9px 0 6px">'+icon+' '+esc(title)+'</div>'
+    + '<div class="set-hint">'+body+'</div></div>';
+}
 
 function renderSettings(){
   var node = onboardNodeId();
@@ -531,11 +548,13 @@ function renderSettings(){
      + '<div class="apps-head-sub">On Board configuration. This is a local UI shell — no server is connected yet.</div></div>';
   h += '<div class="set-nav"><span class="set-nav-item active">Экипаж · Crew</span></div>';
 
-  // 1) Это судно / This vessel
+  // 1) Это судно / This vessel — identity context (vessel name, IMO, node, connection)
   h += '<div class="set-sec"><div class="set-sec-title">Это судно · This vessel</div><div class="set-card">';
   h += '<div class="pair-meta"><span class="pair-meta-k">Vessel</span><span class="pair-meta-v">— (не задано · not set)</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">— (не задано · not set)</span></div>';
   h += '<div class="pair-meta"><span class="pair-meta-k">Node</span><span class="pair-meta-v">'+esc(node)+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Status</span><span class="pair-meta-v">Local preview · no server · v'+esc(APP_VERSION)+'</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Связь</span><span class="pair-meta-v">'+(CREW_API_CONNECTED?'API экипажа подключён':'Local preview · API экипажа не подключён')+'</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Версия</span><span class="pair-meta-v">v'+esc(APP_VERSION)+'</span></div>';
   h += '</div></div>';
 
   // 2) Состав экипажа / Crew roster
@@ -544,6 +563,10 @@ function renderSettings(){
      + '<div class="crew-empty-t">Пока нет связанных моряков</div>'
      + '<div class="crew-empty-s">Когда API экипажа подключат, здесь появятся связанные моряки — имя, должность, статус, дата привязки и действие «отвязать». '
      + 'Сейчас список пуст; ничего не имитируется.</div></div>';
+  // status model (honest legend — no real rows yet)
+  h += '<div class="set-hint" style="margin:10px 0 0">Статусы строки: '
+     + '<span class="set-pill">invited</span> <span class="set-pill">linked</span> '
+     + '<span class="set-pill">left</span> <span class="set-pill">revoked</span></div>';
   // honest, clearly-inactive preview of a future roster row (all em-dashes, no real seafarer)
   h += '<div class="set-card set-disabled" style="margin-top:10px"><div class="set-pill">Пример строки · неактивно</div>';
   h += '<div class="pair-meta" style="margin-top:8px"><span class="pair-meta-k">Имя</span><span class="pair-meta-v">— name</span></div>';
@@ -565,6 +588,7 @@ function renderSettings(){
     h += '<div class="set-hint" style="margin-top:10px">Планируемый формат кода приглашения:</div>';
     h += '<div class="set-mono">skipi-crew:1:onboard:&lt;code&gt;</div>';
     h += '<div class="set-qr-ph">'+(CREW_API_CONNECTED?'QR-код приглашения':'QR-код появится после подключения API экипажа')+'</div>';
+    h += '<div class="set-hint" style="margin-top:10px">Источник кода (когда подключат): <code>'+esc(ONBOARD_CREW_API.invite)+'</code> · TTL короткий · regenerate · copy.</div>';
     h += '<div class="set-hint" style="margin-top:12px">Ручной код: когда API подключат, On&nbsp;Board выдаст короткий одноразовый код, '
        + 'моряк введёт его вручную в Skipi&nbsp;Seafarer (или отсканирует QR) и <b>подтвердит приглашение</b>. '
        + 'Код не выдаётся, пока бэкенд экипажа не подключён — это честная заглушка, не рабочий код.</div>';
@@ -572,11 +596,28 @@ function renderSettings(){
   }
   h += '</div></div>';
 
-  // 4) Безопасность / Security
+  // 4) Дальше / Coming next — honest disabled future blocks (Phases 2-4)
+  h += '<div class="set-sec"><div class="set-sec-title">Дальше · Coming next (honest shell)</div>';
+  h += setFutureCard('📄', 'Профиль и пакет документов (по согласию)',
+        'После привязки моряк сможет <b>явно</b> поделиться с судном профилем и выбранными документами через grants/scopes с audit и отзывом. '
+      + 'Это <b>не</b> весь personal vault — судно увидит только разрешённый пакет. (Phase 2)');
+  h += setFutureCard('🚢', 'Данные судна для моряка',
+        'После привязки у моряка в Skipi&nbsp;Seafarer появится раздел «Судно / Onboard»: vessel profile, joining/safety instructions, '
+      + 'announcements, watch/checklist/familiarization — read-only, кроме подтверждений/отчётов. (Phase 3)');
+  h += setFutureCard('📷', 'Входящие фото и отчёты со смартфона',
+        'Моряк сможет снять фото/отчёт в Skipi&nbsp;Seafarer и отправить в судовой workflow / Ship Vault с провенансом '
+      + '(кто, судно, время, media-hash, тип, опц. подпись). On&nbsp;Board обработает позже. (Phase 4)');
+  h += '</div>';
+
+  // 5) Безопасность / Security — three distinct systems, not to be confused
   h += '<div class="set-sec"><div class="set-sec-title">Безопасность · Security</div>';
-  h += '<div class="apps-safety"><b>Привязка экипажа — это НЕ device pairing.</b> Это не синхронизация устройства и не передача личного vault моряка.</div>';
-  h += '<div class="apps-note">В v1 On&nbsp;Board не получает vault или документы Skipi&nbsp;Seafarer. Моряк должен сам <b>принять приглашение</b> у себя. '
-     + 'Привязка открывает только ограниченный, согласованный канал «моряк ↔ судно».</div>';
+  h += '<div class="apps-safety"><b>Три разные вещи, не путать:</b> '
+     + 'device pairing (перенос сессии, <code>skipi-pair:1:&lt;app&gt;:&lt;code&gt;</code> · <code>/api/devices/*</code>) · '
+     + 'привязка экипажа (<code>skipi-crew:1:onboard:&lt;code&gt;</code> · <code>/api/onboard/crew/*</code>) · '
+     + 'обмен документами (только явные grants). Экипаж — это <b>НЕ</b> device pairing.</div>';
+  h += '<div class="apps-note">В v1 On&nbsp;Board не получает vault или документы Skipi&nbsp;Seafarer. Моряк сам <b>принимает приглашение</b>, '
+     + 'а профиль/документы приходят только через явные согласия (grants) со scopes, audit и возможностью отзыва. '
+     + 'Привязка открывает ограниченный, согласованный канал «моряк ↔ судно».</div>';
   h += '</div>';
 
   h += '</div>'; // set-screen
