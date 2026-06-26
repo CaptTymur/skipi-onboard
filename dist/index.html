@@ -176,6 +176,9 @@
   .set-qr-ph { width:200px; height:200px; display:flex; align-items:center; justify-content:center; text-align:center;
     color:var(--text2); font-size:12px; border:1px dashed var(--border); border-radius:10px; padding:16px; margin-top:12px; }
   .set-disabled { opacity:.6; }
+  .set-lbl { display:block; font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.04em; margin:12px 0 5px; }
+  .set-inp { width:100%; font-size:13px; color:var(--text); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 11px; }
+  .set-inp:focus { outline:none; border-color:var(--accent); }
 
   /* ---- footer strip ---- */
   .plat-strip { flex-shrink:0; border-top:1px solid var(--border); background:var(--surface);
@@ -419,6 +422,7 @@ function setContent(html){
 }
 function showModule(mod){
   stopPairingTimer();
+  if(typeof stopCrewInviteTimer==='function') stopCrewInviteTimer();
   unmountActivePlugin();
   currentModule = mod;
   setActiveTab(mod);
@@ -528,7 +532,7 @@ function showSettings(){
   var tabs = document.querySelectorAll('.mod-tab');
   for(var i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
   var g = document.getElementById('mb-gear'); if(g) g.classList.add('active');
-  renderSettings();
+  if(crewLive()) crewLoadRoster(); else renderSettings();
 }
 function closeSettings(){ showModule(settingsState.returnTo || 'crew'); }
 function toggleCrewInvite(){ settingsState.inviteShown = !settingsState.inviteShown; renderSettings(); }
@@ -540,6 +544,180 @@ function setFutureCard(icon, title, body){
     + '<div class="set-hint">'+body+'</div></div>';
 }
 
+// =========================================================================
+// Live crew wiring — DORMANT by default. The committed master flag
+// CREW_API_CONNECTED stays false; a dev-only runtime override lets us exercise
+// the live path against a deployed backend WITHOUT flipping that constant, and
+// only when API base + ONBOARD_TOKEN + vessel_imo are all configured. If any
+// config is missing or the backend is unreachable the UI stays an honest shell
+// (no fake crew rows, no fake codes). Endpoints: /api/onboard/crew/*.
+// =========================================================================
+var crewState = { invite:null, inviteErr:null, inviteLoading:false, timer:null, roster:null, rosterErr:null, rosterLoading:false };
+
+function crewConfig(){ try { return JSON.parse(localStorage.getItem('skipi-onboard-crew-config')||'{}'); } catch(e){ return {}; } }
+function saveCrewConfig(c){ try { localStorage.setItem('skipi-onboard-crew-config', JSON.stringify(c)); } catch(e){} }
+function crewConfigMissing(){ var c=crewConfig(); var m=[]; if(!c.api_base)m.push('API base'); if(!c.onboard_token)m.push('ONBOARD_TOKEN'); if(!c.vessel_imo)m.push('vessel_imo'); return m; }
+function crewConfigReady(){ return crewConfigMissing().length===0; }
+function crewLiveOverride(){ try { return localStorage.getItem('skipi-onboard-crew-live')==='1'; } catch(e){ return false; } }
+// Backend considered ON only via the committed master flag, or — for testing —
+// a dev-mode runtime override. Never on by default for normal users.
+function crewBackendOn(){ return CREW_API_CONNECTED || (isDevMode() && crewLiveOverride()); }
+function crewLive(){ return crewBackendOn() && crewConfigReady(); }
+
+function crewApiUrl(path){ return String(crewConfig().api_base||'').replace(/\/+$/,'') + path; }
+function crewFetch(method, path, body){
+  var c = crewConfig();
+  var opt = { method:method, headers:{ 'Authorization':'Bearer '+(c.onboard_token||''), 'Content-Type':'application/json' } };
+  if(body!=null) opt.body = JSON.stringify(body);
+  return fetch(crewApiUrl(path), opt).then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error('HTTP '+r.status+(t?(' '+t.slice(0,120)):'')); });
+    return r.status===204 ? null : r.json();
+  });
+}
+function copyText(txt){
+  if(!txt) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ showToast('Скопировано'); }, function(){ fallbackCopy(txt); }); }
+  else fallbackCopy(txt);
+}
+
+function saveCrewConfigFromForm(){
+  var g=function(id){ var el=document.getElementById(id); return el? String(el.value||'').trim() : ''; };
+  saveCrewConfig({ api_base:g('crew-cfg-base'), onboard_token:g('crew-cfg-token'), vessel_imo:g('crew-cfg-imo') });
+  showToast(crewConfigReady()?'Config saved':'Config saved (incomplete)');
+  if(crewLive()) crewLoadRoster(); else renderSettings();
+}
+function toggleCrewLiveOverride(){ // dev only
+  try { localStorage.setItem('skipi-onboard-crew-live', crewLiveOverride()?'0':'1'); } catch(e){}
+  showToast('Crew live override '+(crewLiveOverride()?'on':'off')+' (dev)');
+  crewState.invite=null; crewState.inviteErr=null; stopCrewInviteTimer();
+  if(crewLive()) crewLoadRoster(); else renderSettings();
+}
+
+// --- live invite ---
+function crewRequestInvite(){
+  if(!crewLive()) return;
+  crewState.inviteLoading=true; crewState.inviteErr=null; renderSettings();
+  crewFetch('POST', '/api/onboard/crew/invite', { vessel_imo: crewConfig().vessel_imo })
+    .then(function(res){ crewState.invite=res||{}; crewState.inviteLoading=false; renderSettings(); startCrewInviteTimer(); })
+    .catch(function(e){ crewState.invite=null; crewState.inviteErr=''+e; crewState.inviteLoading=false; stopCrewInviteTimer(); renderSettings(); });
+}
+function crewInvitePayload(){ var inv=crewState.invite; if(!inv) return ''; return inv.qr_payload || ('skipi-crew:1:onboard:'+(inv.code||'')); }
+function startCrewInviteTimer(){ stopCrewInviteTimer(); updateCrewCountdown(); crewState.timer=setInterval(updateCrewCountdown,1000); }
+function stopCrewInviteTimer(){ if(crewState.timer){ clearInterval(crewState.timer); crewState.timer=null; } }
+function updateCrewCountdown(){
+  var el=document.getElementById('crew-countdown'); var inv=crewState.invite;
+  if(!el || !inv || !inv.expires_at){ stopCrewInviteTimer(); return; }
+  var ms=new Date(inv.expires_at).getTime()-Date.now();
+  if(ms<=0){ el.innerHTML='<span class="pair-expired">Код истёк — обновите</span>'; stopCrewInviteTimer(); return; }
+  var t=Math.floor(ms/1000), m=Math.floor(t/60), s=t%60; el.textContent='Истекает через '+m+':'+('0'+s).slice(-2);
+}
+function copyCrewCode(){ var inv=crewState.invite; if(inv) copyText(inv.code || crewInvitePayload()); }
+
+// --- live roster ---
+function crewLoadRoster(){
+  if(!crewLive()){ crewState.roster=null; renderSettings(); return; }
+  crewState.rosterLoading=true; crewState.rosterErr=null; renderSettings();
+  crewFetch('GET', '/api/onboard/crew?vessel_imo='+encodeURIComponent(crewConfig().vessel_imo), null)
+    .then(function(res){ crewState.roster = (res && res.items) ? res.items : (Array.isArray(res)?res:[]); crewState.rosterLoading=false; renderSettings(); })
+    .catch(function(e){ crewState.roster=null; crewState.rosterErr=''+e; crewState.rosterLoading=false; renderSettings(); });
+}
+function crewRevoke(id){
+  if(!crewLive() || !id) return;
+  if(!window.confirm('Отвязать моряка от судна? Это отзывает доступ.')) return;
+  crewFetch('DELETE', '/api/onboard/crew/'+encodeURIComponent(id), null)
+    .then(function(){ showToast('Отвязан'); crewLoadRoster(); })
+    .catch(function(e){ showToast('Ошибка: '+e); });
+}
+
+// --- section renderers (live vs honest shell) ---
+function renderCrewConnectionCard(){
+  var c=crewConfig(); var missing=crewConfigMissing();
+  var stateTxt, warn=true;
+  if(crewLive()){ stateTxt='Подключено · live: '+(c.api_base)+' · IMO '+(c.vessel_imo); warn=false; }
+  else if(crewBackendOn() && !crewConfigReady()){ stateTxt='Backend on · не хватает: '+missing.join(', '); }
+  else { stateTxt='Backend экипажа выключен в этой сборке · honest shell'; }
+  var h='<div class="set-sec"><div class="set-sec-title">Подключение · Connection</div><div class="set-card">';
+  h+='<div class="set-pill'+(warn?' warn':'')+'">'+esc(stateTxt)+'</div>';
+  h+='<label class="set-lbl">API base</label><input id="crew-cfg-base" class="set-inp" placeholder="https://api.skipi.app" value="'+esc(c.api_base||'')+'">';
+  h+='<label class="set-lbl">ONBOARD_TOKEN</label><input id="crew-cfg-token" class="set-inp" type="password" placeholder="bearer token" value="'+esc(c.onboard_token||'')+'">';
+  h+='<label class="set-lbl">Vessel IMO</label><input id="crew-cfg-imo" class="set-inp" inputmode="numeric" placeholder="7-digit IMO" value="'+esc(c.vessel_imo||'')+'">';
+  h+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" type="button" onclick="saveCrewConfigFromForm()">Сохранить · Save</button>';
+  if(isDevMode()){ h+='<button class="btn btn-outline" type="button" onclick="toggleCrewLiveOverride()">'+(crewLiveOverride()?'Live override: ON (dev)':'Включить live (dev)')+'</button>'; }
+  h+='</div>';
+  h+='<div class="set-hint" style="margin-top:10px">Эндпоинты <code>/api/onboard/crew/*</code>. Без полного config (API base · token · vessel_imo) или при недоступном бэкенде — остаётся honest shell, ничего не имитируется. Master-флаг сборки <code>CREW_API_CONNECTED='+(CREW_API_CONNECTED?'true':'false')+'</code>.</div>';
+  h+='</div></div>';
+  return h;
+}
+function renderCrewRosterSection(){
+  var h='<div class="set-sec"><div class="set-sec-title">Состав экипажа · Crew roster</div>';
+  if(crewLive()){
+    if(crewState.rosterLoading){ h+='<div class="set-card set-hint">Загрузка…</div>'; }
+    else if(crewState.rosterErr){ h+='<div class="set-card"><div class="set-pill warn">Не удалось загрузить</div><div class="set-hint" style="margin-top:8px">'+esc(crewState.rosterErr)+'</div><button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewLoadRoster()">Повторить</button></div>'; }
+    else if(!crewState.roster || !crewState.roster.length){ h+='<div class="crew-empty"><div class="crew-empty-icon">👥</div><div class="crew-empty-t">Пока нет связанных моряков</div><div class="crew-empty-s">Пригласите моряка — после принятия он появится здесь.</div></div>'; }
+    else {
+      for(var i=0;i<crewState.roster.length;i++){ var r=crewState.roster[i];
+        h+='<div class="set-card" style="margin-top:10px">';
+        h+='<div class="pair-meta"><span class="pair-meta-k">Имя</span><span class="pair-meta-v">'+esc(r.display_name||r.name||'—')+'</span></div>';
+        h+='<div class="pair-meta"><span class="pair-meta-k">Должн.</span><span class="pair-meta-v">'+esc(r.rank||r.position||'—')+'</span></div>';
+        h+='<div class="pair-meta"><span class="pair-meta-k">Статус</span><span class="pair-meta-v"><span class="set-pill">'+esc(r.status||'—')+'</span></span></div>';
+        h+='<div class="pair-meta"><span class="pair-meta-k">Привязан</span><span class="pair-meta-v">'+esc(String(r.linked_at||'').slice(0,10)||'—')+'</span></div>';
+        h+='<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewRevoke(\''+esc(String(r.id||''))+'\')">Отвязать · Revoke</button>';
+        h+='</div>';
+      }
+    }
+    h+='<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewLoadRoster()">Обновить · Refresh</button>';
+  } else {
+    h+='<div class="crew-empty"><div class="crew-empty-icon">👥</div><div class="crew-empty-t">Пока нет связанных моряков</div>'
+      +'<div class="crew-empty-s">Когда API экипажа подключат, здесь появятся связанные моряки — имя, должность, статус, дата привязки и действие «отвязать». Сейчас список пуст; ничего не имитируется.</div></div>';
+    h+='<div class="set-hint" style="margin:10px 0 0">Статусы строки: <span class="set-pill">invited</span> <span class="set-pill">linked</span> <span class="set-pill">left</span> <span class="set-pill">revoked</span></div>';
+    h+='<div class="set-card set-disabled" style="margin-top:10px"><div class="set-pill">Пример строки · неактивно</div>';
+    h+='<div class="pair-meta" style="margin-top:8px"><span class="pair-meta-k">Имя</span><span class="pair-meta-v">— name</span></div>';
+    h+='<div class="pair-meta"><span class="pair-meta-k">Должн.</span><span class="pair-meta-v">— rank / position</span></div>';
+    h+='<div class="pair-meta"><span class="pair-meta-k">Статус</span><span class="pair-meta-v">— status</span></div>';
+    h+='<div class="pair-meta"><span class="pair-meta-k">Привязан</span><span class="pair-meta-v">— linked date</span></div>';
+    h+='<button class="btn btn-outline" type="button" disabled style="margin-top:10px">Отвязать · Revoke (нужен API)</button></div>';
+  }
+  h+='</div>';
+  return h;
+}
+function renderCrewInviteSection(){
+  var h='<div class="set-sec"><div class="set-sec-title">Пригласить моряка · Invite a seafarer</div><div class="set-card">';
+  if(crewLive()){
+    if(crewState.inviteLoading){ h+='<div class="set-hint">Запрашиваю код…</div>'; }
+    else if(crewState.inviteErr){
+      h+='<div class="set-pill warn">Не удалось получить код</div><div class="set-hint" style="margin-top:8px">'+esc(crewState.inviteErr)+'</div>';
+      h+='<button class="btn btn-accent" type="button" style="margin-top:12px" onclick="crewRequestInvite()">Повторить</button>';
+    }
+    else if(crewState.invite && (crewState.invite.code || crewState.invite.qr_payload)){
+      var payload=crewInvitePayload(); var durl=qrDataUrl(payload);
+      h+= durl ? '<img class="pair-qr-img" alt="Crew invite QR" src="'+durl+'">' : '<div class="set-qr-ph">QR недоступен</div>';
+      h+='<div class="pair-countdown" id="crew-countdown"></div>';
+      h+='<div class="set-hint" style="margin-top:8px">Ручной код:</div><div class="set-mono">'+esc(crewState.invite.code||payload)+'</div>';
+      h+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" type="button" onclick="crewRequestInvite()">Обновить код</button>'
+        +'<button class="btn btn-outline" type="button" onclick="copyCrewCode()">Копировать</button></div>';
+    }
+    else {
+      h+='<button class="btn btn-accent" type="button" onclick="crewRequestInvite()">Показать код</button>';
+      h+='<div class="set-hint" style="margin-top:10px">Моряк вводит код в Skipi Seafarer или сканирует QR и подтверждает приглашение.</div>';
+    }
+  } else {
+    if(!settingsState.inviteShown){
+      h+='<button class="btn btn-accent" type="button" onclick="toggleCrewInvite()">Показать код</button>';
+      h+='<div class="set-hint" style="margin-top:10px">Моряк связывается с судном по одноразовому коду: вводит его в Skipi Seafarer или сканирует QR, затем подтверждает приглашение у себя.</div>';
+    } else {
+      h+='<div class="set-pill warn">API экипажа ещё не подключён</div>';
+      h+='<div class="set-hint" style="margin-top:10px">Планируемый формат кода приглашения:</div>';
+      h+='<div class="set-mono">skipi-crew:1:onboard:&lt;code&gt;</div>';
+      h+='<div class="set-qr-ph">QR-код появится после подключения API экипажа</div>';
+      h+='<div class="set-hint" style="margin-top:10px">Источник кода (когда подключат): <code>'+esc(ONBOARD_CREW_API.invite)+'</code> · TTL короткий · regenerate · copy.</div>';
+      h+='<div class="set-hint" style="margin-top:12px">Ручной код: когда API подключат, On&nbsp;Board выдаст короткий одноразовый код, моряк введёт его вручную в Skipi&nbsp;Seafarer (или отсканирует QR) и <b>подтвердит приглашение</b>. Код не выдаётся, пока бэкенд экипажа не подключён — это честная заглушка, не рабочий код.</div>';
+      h+='<button class="btn btn-outline" type="button" onclick="toggleCrewInvite()" style="margin-top:12px">Скрыть</button>';
+    }
+  }
+  h+='</div></div>';
+  return h;
+}
+
 function renderSettings(){
   var node = onboardNodeId();
   var h = '<div class="set-screen">';
@@ -548,55 +726,27 @@ function renderSettings(){
      + '<div class="apps-head-sub">On Board configuration. This is a local UI shell — no server is connected yet.</div></div>';
   h += '<div class="set-nav"><span class="set-nav-item active">Экипаж · Crew</span></div>';
 
+  var cc = crewConfig();
+  var conn = crewLive() ? 'API экипажа подключён (live)' : (crewBackendOn() ? 'Backend on · нужен config' : 'Local preview · API экипажа не подключён');
   // 1) Это судно / This vessel — identity context (vessel name, IMO, node, connection)
   h += '<div class="set-sec"><div class="set-sec-title">Это судно · This vessel</div><div class="set-card">';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Vessel</span><span class="pair-meta-v">— (не задано · not set)</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">— (не задано · not set)</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Vessel</span><span class="pair-meta-v">'+(cc.vessel_name?esc(cc.vessel_name):'— (не задано · not set)')+'</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">'+(cc.vessel_imo?esc(cc.vessel_imo):'— (не задано · not set)')+'</span></div>';
   h += '<div class="pair-meta"><span class="pair-meta-k">Node</span><span class="pair-meta-v">'+esc(node)+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Связь</span><span class="pair-meta-v">'+(CREW_API_CONNECTED?'API экипажа подключён':'Local preview · API экипажа не подключён')+'</span></div>';
+  h += '<div class="pair-meta"><span class="pair-meta-k">Связь</span><span class="pair-meta-v">'+esc(conn)+'</span></div>';
   h += '<div class="pair-meta"><span class="pair-meta-k">Версия</span><span class="pair-meta-v">v'+esc(APP_VERSION)+'</span></div>';
   h += '</div></div>';
 
-  // 2) Состав экипажа / Crew roster
-  h += '<div class="set-sec"><div class="set-sec-title">Состав экипажа · Crew roster</div>';
-  h += '<div class="crew-empty"><div class="crew-empty-icon">👥</div>'
-     + '<div class="crew-empty-t">Пока нет связанных моряков</div>'
-     + '<div class="crew-empty-s">Когда API экипажа подключат, здесь появятся связанные моряки — имя, должность, статус, дата привязки и действие «отвязать». '
-     + 'Сейчас список пуст; ничего не имитируется.</div></div>';
-  // status model (honest legend — no real rows yet)
-  h += '<div class="set-hint" style="margin:10px 0 0">Статусы строки: '
-     + '<span class="set-pill">invited</span> <span class="set-pill">linked</span> '
-     + '<span class="set-pill">left</span> <span class="set-pill">revoked</span></div>';
-  // honest, clearly-inactive preview of a future roster row (all em-dashes, no real seafarer)
-  h += '<div class="set-card set-disabled" style="margin-top:10px"><div class="set-pill">Пример строки · неактивно</div>';
-  h += '<div class="pair-meta" style="margin-top:8px"><span class="pair-meta-k">Имя</span><span class="pair-meta-v">— name</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Должн.</span><span class="pair-meta-v">— rank / position</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Статус</span><span class="pair-meta-v">— status</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Привязан</span><span class="pair-meta-v">— linked date</span></div>';
-  h += '<button class="btn btn-outline" type="button" disabled style="margin-top:10px">Отвязать · Revoke '+(CREW_API_CONNECTED?'':'(нужен API)')+'</button>';
-  h += '</div></div>';
+  // 2) Подключение / Connection — config + readiness (+ dev live toggle)
+  h += renderCrewConnectionCard();
 
-  // 3) Пригласить моряка / Invite a seafarer
-  h += '<div class="set-sec"><div class="set-sec-title">Пригласить моряка · Invite a seafarer</div><div class="set-card">';
-  if(!settingsState.inviteShown){
-    h += '<button class="btn btn-accent" type="button" onclick="toggleCrewInvite()">Показать код</button>';
-    h += '<div class="set-hint" style="margin-top:10px">Моряк связывается с судном по одноразовому коду: вводит его в Skipi Seafarer или сканирует QR, затем подтверждает приглашение у себя.</div>';
-  } else {
-    if(!CREW_API_CONNECTED){
-      h += '<div class="set-pill warn">API экипажа ещё не подключён</div>';
-    }
-    h += '<div class="set-hint" style="margin-top:10px">Планируемый формат кода приглашения:</div>';
-    h += '<div class="set-mono">skipi-crew:1:onboard:&lt;code&gt;</div>';
-    h += '<div class="set-qr-ph">'+(CREW_API_CONNECTED?'QR-код приглашения':'QR-код появится после подключения API экипажа')+'</div>';
-    h += '<div class="set-hint" style="margin-top:10px">Источник кода (когда подключат): <code>'+esc(ONBOARD_CREW_API.invite)+'</code> · TTL короткий · regenerate · copy.</div>';
-    h += '<div class="set-hint" style="margin-top:12px">Ручной код: когда API подключат, On&nbsp;Board выдаст короткий одноразовый код, '
-       + 'моряк введёт его вручную в Skipi&nbsp;Seafarer (или отсканирует QR) и <b>подтвердит приглашение</b>. '
-       + 'Код не выдаётся, пока бэкенд экипажа не подключён — это честная заглушка, не рабочий код.</div>';
-    h += '<button class="btn btn-outline" type="button" onclick="toggleCrewInvite()" style="margin-top:12px">Скрыть</button>';
-  }
-  h += '</div></div>';
+  // 3) Состав экипажа / Crew roster — live rows or honest shell
+  h += renderCrewRosterSection();
 
-  // 4) Дальше / Coming next — honest disabled future blocks (Phases 2-4)
+  // 4) Пригласить моряка / Invite — live invite or honest shell
+  h += renderCrewInviteSection();
+
+  // 5) Дальше / Coming next — honest disabled future blocks (Phases 2-4)
   h += '<div class="set-sec"><div class="set-sec-title">Дальше · Coming next (honest shell)</div>';
   h += setFutureCard('📄', 'Профиль и пакет документов (по согласию)',
         'После привязки моряк сможет <b>явно</b> поделиться с судном профилем и выбранными документами через grants/scopes с audit и отзывом. '
@@ -1025,6 +1175,7 @@ function setDevMode(on){
   updateVerTag();
   showToast('Developer mode '+(on?'on':'off'));
   if(currentModule==='apps' && !activePlugin){ appsState.selectedId=null; renderApps(); }
+  else if(currentModule==='settings'){ renderSettings(); }
 }
 function updateVerTag(){ var el=document.getElementById('ver-tag'); if(el) el.textContent='v'+APP_VERSION+(isDevMode()?' · dev':''); }
 var _verClicks=0, _verTimer=null;
