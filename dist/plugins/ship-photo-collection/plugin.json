@@ -1,0 +1,29 @@
+{
+  "id": "app.skipi.plugins.ship-photo-collection",
+  "slug": "ship-photo-collection",
+  "name": "Ship Photo Collection",
+  "version": "0.1.0-dev-receiver",
+  "developer": "Skipi",
+  "kind": "workflow",
+  "category": "reports",
+  "icon": "📷",
+  "short": "Vessel-side inbox for photo reports.",
+  "description": "Dev-only bundled receiver fixture for the ship-photo-collection workflow. It lists photo reports for the configured vessel through the On Board host API. The host mediates every backend call and never exposes ONBOARD_TOKEN to plugin JavaScript.",
+  "distribution": { "mode": "bundled_first_party", "bundled": true, "remote_code": false },
+  "dev_only": true,
+  "hosts": ["onboard"],
+  "entrypoints": { "ui": "index.js", "style": "index.css" },
+  "permissions": ["vessel.context", "inbox.read", "inbox.manage"],
+  "capabilities": {
+    "network": "host-mediated",
+    "documents": "none",
+    "account": "none",
+    "analytics": "none",
+    "server_upload": false
+  },
+  "safety": {
+    "certified_equipment": false,
+    "requires_disclaimer": true,
+    "disclaimer": "Dev-only receiver fixture. It reads photo reports for the configured vessel through the host. It does not upload photos and does not receive the vessel bearer token."
+  }
+}

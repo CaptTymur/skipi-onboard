@@ -1588,7 +1588,10 @@ function fallbackCopy(txt){
 
 var SkipiPlugins = (window.SkipiPlugins = window.SkipiPlugins || {});
 // Reviewed bundled artifacts shipped in dist/plugins/<id>/ (loaded at boot).
-var BUNDLED_PLUGIN_DIRS = { 'onboard-host-check': './plugins/onboard-host-check' };
+var BUNDLED_PLUGIN_DIRS = {
+  'onboard-host-check': './plugins/onboard-host-check',
+  'ship-photo-collection': './plugins/ship-photo-collection'
+};
 var activePlugin = null;   // { id, instance } while a plugin is mounted
 var pluginCssEl = null;    // injected <style>/<link> for the active plugin's stylesheet
 var pluginIntegrity = {};  // id -> { ok:bool, cssText:string, reason:string }
