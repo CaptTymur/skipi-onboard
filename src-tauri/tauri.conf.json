@@ -26,10 +26,11 @@
   "plugins": {
     "updater": {
       "endpoints": [
+        "https://github.com/CaptTymur/skipi-onboard/releases/latest/download/latest.json",
         "https://api-ru.skipi.app/onboard/latest.json",
         "https://api.skipi.app/onboard/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZFRTAxNUM4NEE2MzAxRkIKUldUN0FXTkt5QlhnL3VoV2hDWVJja3cwUlBGbFpvWGxnS2pHWFB3TVY0T3ZjS1FsZUtOSlhqOWMK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQwRDZFRUE0RjFGNzAyQ0YKUldUUEF2ZnhwTzdXME9zMk9KV1Z0Q3NNUVRnM2pMMU9aQit2Y3ppa0M1QS9WaG9jQVBMVHpvTG0K",
       "windows": {
         "installMode": "passive"
       }
