@@ -24,20 +24,25 @@
   ::selection { background:var(--accent-bg2); }
 
   /* ---- top modules bar (shell) ---- */
-  .modules-bar { display:flex; align-items:center; height:46px; background:var(--surface);
-    border-bottom:1px solid var(--border); padding:0 14px; gap:10px; flex-shrink:0; }
-  .brand { display:flex; align-items:baseline; gap:8px; min-width:0; }
-  .brand .mark { font-size:17px; font-weight:800; letter-spacing:-.01em; color:var(--text); white-space:nowrap; }
-  .brand .tag { font-size:11.5px; color:var(--text2); white-space:nowrap; }
-  .mod-tabs { display:flex; align-items:center; gap:4px; margin-left:14px; }
-  .mod-tab { height:30px; display:flex; align-items:center; gap:7px; padding:0 14px; border-radius:7px;
-    font-size:13px; font-weight:600; color:var(--text2); background:transparent; border:1px solid transparent; cursor:default; }
-  .mod-tab.active { color:#fff; background:var(--accent); border-color:var(--accent); }
+  .modules-bar { display:flex; align-items:center; height:34px; background:var(--surface);
+    border-bottom:1px solid var(--border); padding:0 8px; gap:2px; flex-shrink:0; }
+  .brand { display:none; }
+  .mod-tabs { display:flex; align-items:center; gap:2px; min-width:0; }
+  .mod-tab { height:26px; min-width:90px; display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:0 12px; border-radius:5px; font-size:12px; font-weight:500; color:var(--text2);
+    background:transparent; border:1px solid transparent; cursor:pointer; white-space:nowrap; }
+  .mod-tab:hover { color:var(--text); background:var(--hover); }
+  .mod-tab.active { color:#fff; background:var(--accent); border-color:var(--accent); font-weight:600; box-shadow:0 1px 0 var(--accent); }
   .mod-tab.locked { color:var(--text2); background:transparent; border:1px dashed var(--border); cursor:pointer; }
   .mod-tab.locked:hover { color:var(--text); border-color:var(--accent); }
   .mod-tab.locked .lock { font-size:11px; opacity:.8; margin-right:1px; }
   .bar-spacer { flex:1; }
-  .bar-note { font-size:11.5px; color:var(--text2); white-space:nowrap; }
+  .bar-note { font-size:11.5px; color:var(--text2); white-space:nowrap; margin-right:6px; }
+  .mb-vessel { display:flex; align-items:center; gap:6px; height:26px; padding:0 10px; border-radius:5px;
+    cursor:default; color:var(--text); font-size:12px; background:var(--bg); border:1px solid var(--border);
+    max-width:240px; overflow:hidden; }
+  .mb-vessel-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mb-caret { opacity:.6; font-size:10px; }
 
   /* ---- scroll body ---- */
   main { flex:1; overflow-y:auto; }
@@ -156,18 +161,41 @@
   .plugin-mount { margin-top:14px; border:1px solid var(--border); border-radius:13px; padding:18px; background:var(--bg); }
 
   /* ---- settings (gear) ---- */
-  .mb-gear { margin-left:8px; width:32px; height:30px; display:flex; align-items:center; justify-content:center;
-    border-radius:7px; border:1px solid transparent; color:var(--text2); cursor:pointer; font-size:17px; line-height:1; }
-  .mb-gear:hover { color:var(--text); background:var(--hover); }
-  .mb-gear.active { color:#fff; background:var(--accent); border-color:var(--accent); }
-  .set-screen { padding:24px 28px 48px; max-width:760px; }
-  .set-back { background:transparent; border:none; color:var(--accent); font-size:13px; font-weight:700; cursor:pointer; padding:4px 0; margin-bottom:8px; }
-  .set-nav { display:flex; gap:6px; margin:16px 0 8px; }
-  .set-nav-item { font-size:13px; font-weight:700; padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text2); }
-  .set-nav-item.active { color:#fff; background:var(--accent); border-color:var(--accent); }
-  .set-sec { margin:22px 0; }
+  .mb-gear { width:36px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px;
+    cursor:pointer; color:var(--text); font-size:21px; margin-left:6px; background:var(--bg); border:1px solid var(--border); line-height:1; }
+  .mb-gear:hover { color:var(--accent); background:var(--accent-bg); border-color:var(--accent); }
+  .mb-gear.active { color:var(--accent); background:var(--accent-bg); border-color:var(--accent); }
+  .settings-overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.28);
+    align-items:center; justify-content:center; padding:24px; }
+  .settings-overlay.open { display:flex; }
+  .settings-modal { position:relative; width:min(900px,92vw); height:min(650px,88vh); background:var(--surface);
+    border-radius:12px; display:flex; overflow:hidden; box-shadow:0 20px 60px rgba(15,23,42,.22); border:1px solid var(--border); }
+  .settings-nav { width:220px; background:var(--bg); border-right:1px solid var(--border); padding:12px 0; overflow-y:auto; flex-shrink:0; }
+  .settings-nav-title { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); padding:12px 16px 4px; font-weight:700; }
+  .settings-nav-item { padding:7px 16px; font-size:13px; cursor:pointer; color:var(--text); display:flex; align-items:center; gap:8px; border-radius:0; }
+  .settings-nav-item:hover { background:var(--hover); }
+  .settings-nav-item.active { background:var(--accent-bg); color:var(--accent); }
+  .settings-nav-item .nav-icon { width:18px; text-align:center; font-size:14px; opacity:.76; }
+  .settings-body { flex:1; overflow-y:auto; padding:28px 32px; }
+  .settings-close { position:absolute; top:12px; right:16px; width:28px; height:28px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; border:none; border-radius:4px; color:var(--text2); background:transparent; font-size:18px; z-index:101; }
+  .settings-close:hover { background:var(--hover); color:var(--text); }
+  .set-screen { max-width:680px; }
+  .set-sec { margin:0 0 28px; }
   .set-sec-title { font-size:13px; font-weight:800; color:var(--text); margin-bottom:11px; }
-  .set-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; }
+  .set-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .settings-section { margin-bottom:28px; }
+  .settings-section h3 { font-size:20px; font-weight:650; margin:0 0 4px; }
+  .settings-section .section-desc { font-size:12px; color:var(--text2); line-height:1.45; margin-bottom:18px; }
+  .setting-row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 16px;
+    border-bottom:1px solid var(--border); background:var(--bg); }
+  .setting-row:first-of-type { border-radius:8px 8px 0 0; }
+  .setting-row:last-of-type { border-bottom:none; border-radius:0 0 8px 8px; }
+  .setting-row:only-of-type { border-radius:8px; }
+  .setting-info { flex:1; min-width:0; }
+  .setting-label { font-size:13px; font-weight:600; color:var(--text); }
+  .setting-desc { font-size:11.5px; color:var(--text2); margin-top:3px; line-height:1.45; word-break:break-word; }
+  .setting-control { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
   .set-pill { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:3px 9px; border-radius:999px; background:var(--hover); color:var(--text2); }
   .set-pill.warn { background:rgba(201,133,47,.16); color:var(--orange); }
   .set-hint { font-size:12.5px; color:var(--text2); line-height:1.5; }
@@ -191,9 +219,69 @@
     border-radius:9px; padding:10px 16px; font-size:13px; max-width:90%; opacity:0; pointer-events:none;
     transition:opacity .18s; z-index:50; }
   .toast.show { opacity:.96; }
+
+  /* ---- launch / first-run fork ---- */
+  body.launching { background:#f8fbfc; }
+  body.launching .modules-bar,
+  body.launching .plat-strip { display:none; }
+  body.launching main { display:flex; align-items:center; justify-content:center; padding:32px; overflow:auto; }
+  .launch-screen { width:min(940px,100%); display:grid; grid-template-columns:minmax(0,360px) minmax(0,470px);
+    gap:34px; align-items:center; }
+  .launch-brand-panel { min-width:0; }
+  .launch-kicker { display:inline-flex; align-items:center; min-height:28px; padding:5px 11px; border-radius:999px;
+    color:var(--accent); background:var(--accent-bg); border:1px solid var(--accent-bg2);
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .launch-title { margin:18px 0 0; font-size:34px; line-height:1.1; font-weight:850; color:var(--text); }
+  .launch-subtitle { margin-top:12px; font-size:14px; line-height:1.55; color:var(--text2); max-width:330px; }
+  .launch-meta { margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; }
+  .launch-chip { display:inline-flex; align-items:center; min-height:26px; padding:5px 10px; border-radius:999px;
+    background:#fff; border:1px solid var(--border); color:var(--text2); font-size:11.5px; font-weight:700; }
+  .launch-panel { background:#fff; border:1px solid var(--border); border-radius:15px; padding:24px;
+    box-shadow:0 16px 44px rgba(15,23,42,.08); }
+  .launch-panel-title { font-size:21px; line-height:1.2; font-weight:850; color:var(--text); }
+  .launch-panel-sub { margin-top:7px; font-size:12.5px; line-height:1.5; color:var(--text2); }
+  .launch-actions { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+  .launch-option { width:100%; text-align:left; border:1px solid var(--border); border-radius:11px; background:#fff;
+    color:var(--text); padding:14px 15px; cursor:pointer; }
+  .launch-option:hover { border-color:var(--accent); box-shadow:0 1px 8px rgba(0,0,0,.04); }
+  .launch-option.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .launch-option.primary:hover { background:var(--accent-strong); }
+  .launch-option-title { display:block; font-size:14px; line-height:1.25; font-weight:850; }
+  .launch-option-sub { display:block; margin-top:4px; font-size:12px; line-height:1.4; color:var(--text2); }
+  .launch-option.primary .launch-option-sub { color:rgba(255,255,255,.78); }
+  .launch-note { margin-top:14px; font-size:12px; line-height:1.45; color:var(--text2); }
+  .launch-code-form { margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+  .launch-code-input { width:100%; font-size:17px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text); background:#fff; border:1px solid var(--border); border-radius:11px; padding:13px 14px; }
+  .launch-code-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .launch-inline-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .launch-back { margin-top:14px; background:transparent; border:none; color:var(--accent); font-size:13px;
+    font-weight:800; cursor:pointer; padding:4px 0; }
+  .launch-error { margin-top:12px; color:#9f3412; background:#fff7ed; border:1px solid #fed7aa;
+    border-radius:9px; padding:10px 12px; font-size:12.5px; line-height:1.4; }
+  @media (max-width:760px){
+    body.launching main { align-items:flex-start; padding:22px 16px; }
+    .launch-screen { grid-template-columns:1fr; gap:20px; }
+    .launch-title { font-size:29px; }
+    .launch-panel { padding:19px; }
+    .modules-bar { overflow-x:auto; scrollbar-width:none; }
+    .modules-bar::-webkit-scrollbar { display:none; }
+    .mod-tab { min-width:auto; }
+    .bar-note { display:none; }
+    .mb-vessel { max-width:150px; }
+    .settings-overlay { padding:0; align-items:stretch; justify-content:stretch; }
+    .settings-modal { width:100vw; height:100dvh; max-height:none; border-radius:0; flex-direction:column; }
+    .settings-nav { width:100%; display:flex; gap:4px; overflow-x:auto; overflow-y:hidden; border-right:none; border-bottom:1px solid var(--border); padding:8px 10px; }
+    .settings-nav-title { display:none; }
+    .settings-nav-item { flex:0 0 auto; border-radius:8px; padding:9px 11px; white-space:nowrap; }
+    .settings-body { flex:1; padding:18px 14px 28px; }
+    .settings-close { top:10px; right:10px; width:40px; height:40px; border:1px solid var(--border); border-radius:8px; background:var(--surface); font-size:22px; }
+    .settings-section h3 { padding-right:48px; }
+    .setting-row { align-items:flex-start; flex-direction:column; gap:8px; }
+  }
 </style>
 </head>
-<body>
+<body class="launching">
   <div class="modules-bar">
     <div class="brand">
       <span class="mark">⚓ Skipi On&nbsp;Board</span>
@@ -206,10 +294,23 @@
     </div>
     <div class="bar-spacer"></div>
     <div class="bar-note">Local preview · no server · no account</div>
+    <div class="mb-vessel" id="mb-vessel" title="Current vessel context">
+      <span>▣</span>
+      <span class="mb-vessel-name" id="mb-vessel-name">Vessel</span>
+      <span class="mb-caret">▾</span>
+    </div>
     <div class="mb-gear" id="mb-gear" onclick="showSettings()" title="Settings · Настройки">⚙</div>
   </div>
 
   <main><div id="scr-content"></div></main>
+
+  <div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+    <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <button class="settings-close" type="button" onclick="closeSettings()" aria-label="Close settings">×</button>
+      <nav class="settings-nav" id="settings-nav"></nav>
+      <div class="settings-body" id="settings-body"></div>
+    </div>
+  </div>
 
   <div class="plat-strip">
     <b>Skipi platform</b><span class="plat-dot">·</span>
@@ -235,6 +336,105 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
 function showToast(msg){
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(showToast._t); showToast._t=setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+
+// ---------- launch / first-run fork ----------
+function launchBrandHtml(){
+  return '<div class="launch-brand-panel">'
+    + '<div class="launch-kicker">Skipi On Board</div>'
+    + '<h1 class="launch-title">Судовой рабочий стол</h1>'
+    + '<div class="launch-subtitle">Первый экран наследует общий desktop launch pattern Skipi: сначала выбираем демонстрацию или реальную работу, затем создаём судно или подключаемся по коду.</div>'
+    + '<div class="launch-meta">'
+    + '<span class="launch-chip">Accent #004564</span>'
+    + '<span class="launch-chip">Light desktop shell</span>'
+    + '<span class="launch-chip">Local honest UI</span>'
+    + '</div>'
+    + '</div>';
+}
+function launchLayout(panelHtml){
+  document.body.classList.add('launching');
+  setContent('<section class="launch-screen" data-qa="onboard-launch-screen">'
+    + launchBrandHtml()
+    + '<div class="launch-panel">' + panelHtml + '</div>'
+    + '</section>');
+}
+function showLaunch(mode, err){
+  if(mode==='use'){
+    launchLayout('<div class="launch-panel-title">Начать работу</div>'
+      + '<div class="launch-panel-sub">Выберите, с каким судовым контекстом открыть Skipi On Board.</div>'
+      + '<div class="launch-actions">'
+      + '<button class="launch-option primary" type="button" data-qa="onboard-launch-create-vessel" onclick="launchCreateVessel()">'
+      + '<span class="launch-option-title">Создать новое судно</span>'
+      + '<span class="launch-option-sub">Новый vessel vault: профиль судна, документы, экипаж и локальный рабочий контекст.</span>'
+      + '</button>'
+      + '<button class="launch-option" type="button" data-qa="onboard-launch-connect-existing" onclick="showLaunch(\'connect\')">'
+      + '<span class="launch-option-title">Подключиться к существующему судну</span>'
+      + '<span class="launch-option-sub">Введите код, показанный в действующем судовом On Board пространстве.</span>'
+      + '</button>'
+      + '</div>'
+      + '<button class="launch-back" type="button" data-qa="onboard-launch-back" onclick="showLaunch(\'choice\')">Назад</button>');
+    return;
+  }
+  if(mode==='connect'){
+    launchLayout('<div class="launch-panel-title">Подключиться по коду</div>'
+      + '<div class="launch-panel-sub">Код связывает этот On Board экран с существующим судовым пространством. Это не device pairing и не миграция устройства.</div>'
+      + (err ? '<div class="launch-error">'+esc(err)+'</div>' : '')
+      + '<form class="launch-code-form" onsubmit="launchSubmitCode(); return false;">'
+      + '<input id="launch-code" class="launch-code-input" data-qa="onboard-launch-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="КОД СУДНА">'
+      + '<div class="launch-inline-actions">'
+      + '<button class="btn btn-accent" type="submit" data-qa="onboard-launch-submit-code">Подключиться</button>'
+      + '<button class="btn btn-outline" type="button" data-qa="onboard-launch-back" onclick="showLaunch(\'use\')">Назад</button>'
+      + '</div>'
+      + '</form>'
+      + '<div class="launch-note">В этой локальной оболочке код сохраняется как pending connection. Проверка кода и выдача доступа должны подключаться отдельным backend/wiring треком.</div>');
+    setTimeout(function(){ var el=document.getElementById('launch-code'); if(el) el.focus(); }, 0);
+    return;
+  }
+  launchLayout('<div class="launch-panel-title">Открыть Skipi On Board</div>'
+    + '<div class="launch-panel-sub">Единая логика входа для desktop-приложений Skipi: сначала демонстрация или работа, без смешивания с настройками и pairing-flow.</div>'
+    + '<div class="launch-actions">'
+    + '<button class="launch-option primary" type="button" data-qa="onboard-launch-use" onclick="showLaunch(\'use\')">'
+    + '<span class="launch-option-title">Пользоваться</span>'
+    + '<span class="launch-option-sub">Создать новое судно или подключиться к существующему судовому пространству.</span>'
+    + '</button>'
+    + '<button class="launch-option" type="button" data-qa="onboard-launch-demo" onclick="launchDemo()">'
+    + '<span class="launch-option-title">Показать демонстрацию</span>'
+    + '<span class="launch-option-sub">Открыть демо-оболочку без сервера, аккаунта и реального crew access.</span>'
+    + '</button>'
+    + '</div>'
+    + '<div class="launch-note">Демо не создаёт судно и не подключает backend. Реальная работа начинается через создание vessel vault или подключение по коду.</div>');
+}
+function launchSaveContext(mode, extra){
+  var c = {};
+  try { c = crewConfig(); } catch(e){}
+  c.vessel_mode = mode;
+  if(extra){ for(var k in extra){ if(Object.prototype.hasOwnProperty.call(extra,k)) c[k] = extra[k]; } }
+  try {
+    saveCrewConfig(c);
+    localStorage.setItem('skipi-onboard-launch-mode', mode);
+  } catch(e){}
+  updateVesselChip();
+}
+function launchEnterShell(msg){
+  document.body.classList.remove('launching');
+  showModule('crew');
+  if(msg) showToast(msg);
+}
+function launchDemo(){
+  launchSaveContext('demo', { vessel_name:'Demo vessel' });
+  launchEnterShell('Demo vessel opened');
+}
+function launchCreateVessel(){
+  launchSaveContext('created', { vessel_name:'New vessel' });
+  launchEnterShell('New vessel workspace created locally');
+}
+function launchSubmitCode(){
+  var el = document.getElementById('launch-code');
+  var code = el ? String(el.value||'').replace(/\s+/g,'').toUpperCase() : '';
+  if(code.length < 4){ showLaunch('connect', 'Введите код судна.'); return; }
+  launchSaveContext('join-code', { vessel_name:'Existing vessel (pending)', pending_vessel_code:code });
+  try { localStorage.setItem('skipi-onboard-pending-vessel-code', code); } catch(e){}
+  launchEnterShell('Vessel code saved for connection review');
 }
 
 // ===================== Apps / Plugins host =====================
@@ -415,17 +615,27 @@ function setActiveTab(mod){
   for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('active', tabs[i].getAttribute('data-mod')===mod); }
   var g = document.getElementById('mb-gear'); if(g) g.classList.remove('active');
 }
+function updateVesselChip(){
+  var el = document.getElementById('mb-vessel-name');
+  if(!el) return;
+  var c = {};
+  try { c = crewConfig(); } catch(e){}
+  el.textContent = c.vessel_name || c.vessel_imo || 'Vessel';
+}
 function setContent(html){
   var content = document.getElementById('scr-content');
   if(content) content.innerHTML = html;
   var m = document.querySelector('main'); if(m) m.scrollTop = 0;
 }
 function showModule(mod){
+  var ov=document.getElementById('settings-overlay'); if(ov) ov.classList.remove('open');
+  document.body.classList.remove('launching');
   stopPairingTimer();
   if(typeof stopCrewInviteTimer==='function') stopCrewInviteTimer();
   unmountActivePlugin();
   currentModule = mod;
   setActiveTab(mod);
+  updateVesselChip();
   if(mod==='apps'){ renderApps(); }
   else if(mod==='vdocs'){ renderVesselDocs(); }
   else { renderCrew(); }
@@ -450,13 +660,13 @@ function renderCrew(){
   var h = '<div class="apps-screen">';
   h += '<div class="apps-head"><div class="apps-head-row"><div>'
      + '<div class="apps-head-title">Crew</div>'
-     + '<div class="apps-head-sub">The people linked to this vessel. Crew connect their own device by scanning a QR from '
+     + '<div class="apps-head-sub">The people linked to this vessel. Crew accept a vessel invite from '
      + '<b>Skipi Seafarer</b> — On&nbsp;Board never receives a seafarer’s whole personal vault, only the onboard workflow they explicitly share.</div>'
-     + '</div><button class="pair-cta" type="button" onclick="openPairing()">🔗 Pair crew member</button></div></div>';
+     + '</div><button class="pair-cta" type="button" onclick="openPairing()">🔗 Invite crew member</button></div></div>';
   // placeholder stat cards
   h += '<div class="crew-stats">'
      + crewStat('Total crew', '0', 'linked seafarers')
-     + crewStat('Paired devices', '0', 'active connections')
+     + crewStat('Linked crew', '0', 'accepted vessel invites')
      + crewStat('Pending invites', '0', 'awaiting scan')
      + crewStat('Recent onboarding', '—', 'last 7 days')
      + '</div>';
@@ -464,12 +674,12 @@ function renderCrew(){
   h += '<div class="crew-section-t">Linked crew</div>';
   h += '<div class="crew-empty"><div class="crew-empty-icon">👥</div>'
      + '<div class="crew-empty-t">No linked crew yet</div>'
-     + '<div class="crew-empty-s">Pair the first crew member: open pairing, show the vessel QR, and have them scan it in Skipi Seafarer. '
+     + '<div class="crew-empty-s">Invite the first crew member: show the vessel QR/code and have them accept it in Skipi Seafarer. '
      + 'Linked crew and their onboarding status will appear here.</div>'
-     + '<button class="pair-cta" type="button" onclick="openPairing()">🔗 Pair crew member</button></div>';
+     + '<button class="pair-cta" type="button" onclick="openPairing()">🔗 Invite crew member</button></div>';
   // privacy note
   h += '<div class="apps-note" style="margin-top:18px;"><b>Privacy</b> — On&nbsp;Board does not receive a seafarer’s whole personal vault. '
-     + 'Pairing opens only a scoped, consented channel; documents, CV and personal data stay on the seafarer’s device unless they explicitly share a specific onboard item.</div>';
+     + 'Crew linking opens only a scoped, consented channel; documents, CV and personal data stay on the seafarer’s device unless they explicitly share a specific onboard item.</div>';
   h += '</div>';
   setContent(h);
 }
@@ -509,7 +719,7 @@ function renderVesselDocs(){
 // wired, the honest placeholders here become live. Linking crew never shares a
 // seafarer's Skipi Seafarer vault/documents and always requires the seafarer to
 // accept the invite. The planned invite payload is `skipi-crew:1:onboard:<code>`.
-var settingsState = { inviteShown:false, returnTo:'crew' };
+var settingsState = { inviteShown:false, returnTo:'crew', tab:'vessel' };
 // Whether a crew backend is wired. Hard-false in this UI shell — On Board makes
 // no crew API calls. Flip only when the crew API actually exists.
 var CREW_API_CONNECTED = false;
@@ -524,17 +734,26 @@ var ONBOARD_CREW_API = {
   revoke: 'DELETE /api/onboard/crew/{id}'        // revoke a crew member
 };
 
-function showSettings(){
+function showSettings(tab){
   stopPairingTimer();
   unmountActivePlugin();
   settingsState.returnTo = (currentModule && currentModule!=='settings') ? currentModule : 'crew';
-  currentModule = 'settings';
+  if(tab) settingsState.tab = tab;
   var tabs = document.querySelectorAll('.mod-tab');
   for(var i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
   var g = document.getElementById('mb-gear'); if(g) g.classList.add('active');
+  var ov = document.getElementById('settings-overlay'); if(ov) ov.classList.add('open');
   if(crewLive()) crewLoadRoster(); else renderSettings();
 }
-function closeSettings(){ showModule(settingsState.returnTo || 'crew'); }
+function closeSettings(){
+  var ov = document.getElementById('settings-overlay'); if(ov) ov.classList.remove('open');
+  var g = document.getElementById('mb-gear'); if(g) g.classList.remove('active');
+  setActiveTab(settingsState.returnTo || currentModule || 'crew');
+}
+function settingsSetTab(tab){
+  settingsState.tab = tab || 'vessel';
+  renderSettings();
+}
 function toggleCrewInvite(){ settingsState.inviteShown = !settingsState.inviteShown; renderSettings(); }
 // Honest disabled "future" card (Phase 2-4). body is trusted static HTML.
 function setFutureCard(icon, title, body){
@@ -582,7 +801,9 @@ function copyText(txt){
 
 function saveCrewConfigFromForm(){
   var g=function(id){ var el=document.getElementById(id); return el? String(el.value||'').trim() : ''; };
-  saveCrewConfig({ api_base:g('crew-cfg-base'), onboard_token:g('crew-cfg-token'), vessel_imo:g('crew-cfg-imo') });
+  var prev=crewConfig();
+  saveCrewConfig({ api_base:g('crew-cfg-base'), onboard_token:g('crew-cfg-token'), vessel_imo:g('crew-cfg-imo'), vessel_name:prev.vessel_name, vessel_mode:prev.vessel_mode, pending_vessel_code:prev.pending_vessel_code });
+  updateVesselChip();
   showToast(crewConfigReady()?'Config saved':'Config saved (incomplete)');
   if(crewLive()) crewLoadRoster(); else renderSettings();
 }
@@ -718,60 +939,95 @@ function renderCrewInviteSection(){
   return h;
 }
 
+function settingsRow(label, desc, control){
+  return '<div class="setting-row"><div class="setting-info"><div class="setting-label">'+esc(label)+'</div>'
+    + '<div class="setting-desc">'+desc+'</div></div>'
+    + (control?'<div class="setting-control">'+control+'</div>':'') + '</div>';
+}
+function renderSettingsNav(){
+  var tab = settingsState.tab || 'vessel';
+  var items = [
+    ['vessel','▣','Судно'],
+    ['crew','☷','Экипаж'],
+    ['connection','⚙','Подключение'],
+    ['workflow','⇄','Workflow'],
+    ['security','◇','Security'],
+    ['about','ⓘ','About']
+  ];
+  var h = '<div class="settings-nav-title">Settings</div>';
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    h += '<div class="settings-nav-item'+(tab===it[0]?' active':'')+'" data-qa="onboard-settings-'+it[0]+'" onclick="settingsSetTab(\''+it[0]+'\')">'
+      + '<span class="nav-icon">'+it[1]+'</span><span>'+it[2]+'</span></div>';
+  }
+  var nav=document.getElementById('settings-nav'); if(nav) nav.innerHTML=h;
+}
+function settingsTitle(title, desc){
+  return '<div class="settings-section"><h3 id="settings-title">'+esc(title)+'</h3><div class="section-desc">'+desc+'</div>';
+}
 function renderSettings(){
+  renderSettingsNav();
+  var body = document.getElementById('settings-body');
+  if(!body) return;
+  var tab = settingsState.tab || 'vessel';
   var node = onboardNodeId();
-  var h = '<div class="set-screen">';
-  h += '<button class="set-back" type="button" onclick="closeSettings()">← Готово · Done</button>';
-  h += '<div class="apps-head"><div class="apps-head-title">Settings · Настройки</div>'
-     + '<div class="apps-head-sub">On Board configuration. This is a local UI shell — no server is connected yet.</div></div>';
-  h += '<div class="set-nav"><span class="set-nav-item active">Экипаж · Crew</span></div>';
-
   var cc = crewConfig();
   var conn = crewLive() ? 'API экипажа подключён (live)' : (crewBackendOn() ? 'Backend on · нужен config' : 'Local preview · API экипажа не подключён');
-  // 1) Это судно / This vessel — identity context (vessel name, IMO, node, connection)
-  h += '<div class="set-sec"><div class="set-sec-title">Это судно · This vessel</div><div class="set-card">';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Vessel</span><span class="pair-meta-v">'+(cc.vessel_name?esc(cc.vessel_name):'— (не задано · not set)')+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">'+(cc.vessel_imo?esc(cc.vessel_imo):'— (не задано · not set)')+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Node</span><span class="pair-meta-v">'+esc(node)+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Связь</span><span class="pair-meta-v">'+esc(conn)+'</span></div>';
-  h += '<div class="pair-meta"><span class="pair-meta-k">Версия</span><span class="pair-meta-v">v'+esc(APP_VERSION)+'</span></div>';
-  h += '</div></div>';
+  var h = '<div class="set-screen">';
 
-  // 2) Подключение / Connection — config + readiness (+ dev live toggle)
-  h += renderCrewConnectionCard();
-
-  // 3) Состав экипажа / Crew roster — live rows or honest shell
-  h += renderCrewRosterSection();
-
-  // 4) Пригласить моряка / Invite — live invite or honest shell
-  h += renderCrewInviteSection();
-
-  // 5) Дальше / Coming next — honest disabled future blocks (Phases 2-4)
-  h += '<div class="set-sec"><div class="set-sec-title">Дальше · Coming next (honest shell)</div>';
-  h += setFutureCard('📄', 'Профиль и пакет документов (по согласию)',
-        'После привязки моряк сможет <b>явно</b> поделиться с судном профилем и выбранными документами через grants/scopes с audit и отзывом. '
-      + 'Это <b>не</b> весь personal vault — судно увидит только разрешённый пакет. (Phase 2)');
-  h += setFutureCard('🚢', 'Данные судна для моряка',
-        'После привязки у моряка в Skipi&nbsp;Seafarer появится раздел «Судно / Onboard»: vessel profile, joining/safety instructions, '
-      + 'announcements, watch/checklist/familiarization — read-only, кроме подтверждений/отчётов. (Phase 3)');
-  h += setFutureCard('📷', 'Входящие фото и отчёты со смартфона',
-        'Моряк сможет снять фото/отчёт в Skipi&nbsp;Seafarer и отправить в судовой workflow / Ship Vault с провенансом '
-      + '(кто, судно, время, media-hash, тип, опц. подпись). On&nbsp;Board обработает позже. (Phase 4)');
+  if(tab==='vessel'){
+    h += settingsTitle('Судно', 'Текущий vessel context. Это рабочее судовое пространство On Board, а не personal vault моряка.');
+    h += '<div>';
+    h += settingsRow('Vessel', esc(cc.vessel_name || '— не задано'), '<span class="set-pill">'+esc(cc.vessel_mode || 'local')+'</span>');
+    h += settingsRow('IMO', esc(cc.vessel_imo || '— не задано'), '');
+    h += settingsRow('Node', esc(node), '');
+    h += settingsRow('Connection', esc(conn), '');
+    h += settingsRow('Version', 'Skipi On Board v'+esc(APP_VERSION), '');
+    h += '</div></div>';
+  } else if(tab==='crew'){
+    h += settingsTitle('Экипаж', 'Crew membership controls stay separate from device pairing. Моряк принимает приглашение в Seafarer сам.');
+    h += '</div>';
+    h += renderCrewRosterSection();
+    h += renderCrewInviteSection();
+  } else if(tab==='connection'){
+    h += settingsTitle('Подключение', 'API/server connection readiness for the crew membership backend. No fake roster rows or fake codes.');
+    h += '</div>';
+    h += renderCrewConnectionCard();
+  } else if(tab==='workflow'){
+    h += settingsTitle('Workflow', 'Future On Board blocks. They stay disabled until real grants/photos/reports wiring exists.');
+    h += '</div>';
+    h += '<div class="set-sec"><div class="set-sec-title">Дальше · Coming next (honest shell)</div>';
+    h += setFutureCard('📄', 'Профиль и пакет документов (по согласию)',
+          'После привязки моряк сможет <b>явно</b> поделиться с судном профилем и выбранными документами через grants/scopes с audit и отзывом. '
+        + 'Это <b>не</b> весь personal vault — судно увидит только разрешённый пакет. (Phase 2)');
+    h += setFutureCard('🚢', 'Данные судна для моряка',
+          'После привязки у моряка в Skipi&nbsp;Seafarer появится раздел «Судно / Onboard»: vessel profile, joining/safety instructions, '
+        + 'announcements, watch/checklist/familiarization — read-only, кроме подтверждений/отчётов. (Phase 3)');
+    h += setFutureCard('📷', 'Входящие фото и отчёты со смартфона',
+          'Моряк сможет снять фото/отчёт в Skipi&nbsp;Seafarer и отправить в судовой workflow / Ship Vault с провенансом '
+        + '(кто, судно, время, media-hash, тип, опц. подпись). On&nbsp;Board обработает позже. (Phase 4)');
+    h += '</div>';
+  } else if(tab==='security'){
+    h += settingsTitle('Security', 'Product boundary for vessel crew membership, device pairing, and document/photo grants.');
+    h += '</div>';
+    h += '<div class="set-sec"><div class="apps-safety"><b>Три разные вещи, не путать:</b> '
+      + 'device pairing (перенос сессии, <code>skipi-pair:1:&lt;app&gt;:&lt;code&gt;</code> · <code>/api/devices/*</code>) · '
+      + 'привязка экипажа (<code>skipi-crew:1:onboard:&lt;code&gt;</code> · <code>/api/onboard/crew/*</code>) · '
+      + 'обмен документами (только явные grants). Экипаж — это <b>НЕ</b> device pairing.</div>';
+    h += '<div class="apps-note">В v1 On&nbsp;Board не получает vault или документы Skipi&nbsp;Seafarer. Моряк сам <b>принимает приглашение</b>, '
+      + 'а профиль/документы приходят только через явные согласия (grants) со scopes, audit и возможностью отзыва. '
+      + 'Привязка открывает ограниченный, согласованный канал «моряк ↔ судно».</div></div>';
+  } else {
+    h += settingsTitle('About Skipi On Board', 'Local desktop shell for vessel-side workflows.');
+    h += '<div>';
+    h += settingsRow('Application', 'Skipi On Board', '');
+    h += settingsRow('Version', 'v'+esc(APP_VERSION), '');
+    h += settingsRow('UI family', 'Desktop navigation and settings inherit Skipi Seafarer pattern: compact module tabs, vessel chip, gear, two-panel settings modal.', '');
+    h += settingsRow('Status', 'Local honest UI shell. No build/release/backend work in this pass.', '<span class="set-pill warn">review</span>');
+    h += '</div></div>';
+  }
   h += '</div>';
-
-  // 5) Безопасность / Security — three distinct systems, not to be confused
-  h += '<div class="set-sec"><div class="set-sec-title">Безопасность · Security</div>';
-  h += '<div class="apps-safety"><b>Три разные вещи, не путать:</b> '
-     + 'device pairing (перенос сессии, <code>skipi-pair:1:&lt;app&gt;:&lt;code&gt;</code> · <code>/api/devices/*</code>) · '
-     + 'привязка экипажа (<code>skipi-crew:1:onboard:&lt;code&gt;</code> · <code>/api/onboard/crew/*</code>) · '
-     + 'обмен документами (только явные grants). Экипаж — это <b>НЕ</b> device pairing.</div>';
-  h += '<div class="apps-note">В v1 On&nbsp;Board не получает vault или документы Skipi&nbsp;Seafarer. Моряк сам <b>принимает приглашение</b>, '
-     + 'а профиль/документы приходят только через явные согласия (grants) со scopes, audit и возможностью отзыва. '
-     + 'Привязка открывает ограниченный, согласованный канал «моряк ↔ судно».</div>';
-  h += '</div>';
-
-  h += '</div>'; // set-screen
-  setContent(h);
+  body.innerHTML = h;
 }
 
 // ===================== QR pairing (Stage 1 — On Board is the QR issuer) =====================
@@ -854,13 +1110,13 @@ function renderPairing(){
   var compact = JSON.stringify(inv);
   var durl = qrDataUrl(compact);
   var qrHtml = durl
-    ? '<img class="pair-qr-img" alt="Pairing invite QR" src="'+durl+'">'
+    ? '<img class="pair-qr-img" alt="Vessel invite QR" src="'+durl+'">'
     : '<div class="pair-qr-missing">QR encoder failed to load. Use the payload preview below.</div>';
 
   var h = '<div class="apps-screen pair-screen">';
   h += '<button class="apps-back" type="button" onclick="closePairing()">← Crew</button>';
-  h += '<div class="apps-head"><div class="apps-head-title">Pair a crew member</div>'
-     + '<div class="apps-head-sub">Crew open <b>Skipi Seafarer</b> and scan this code to connect their device to this vessel’s On&nbsp;Board node. '
+  h += '<div class="apps-head"><div class="apps-head-title">Invite a crew member</div>'
+     + '<div class="apps-head-sub">Crew open <b>Skipi Seafarer</b> and scan this code to join this vessel’s On&nbsp;Board workspace. '
      + 'Their <b>Vessel / Onboard</b> module unlocks only after they confirm on their side.</div></div>';
 
   h += '<div class="pair-grid">';
@@ -1061,7 +1317,7 @@ function pluginDetailHtml(id){
   if(m.description) h += '<p class="apps-detail-desc">'+esc(m.description)+'</p>';
   h += pluginPermsHtml(m);
   h += '<div class="apps-note"><b>Sandbox</b> — this plugin runs in an isolated container with a narrow host API '
-     + '(theme, its own scoped storage, navigation). It has <b>no access</b> to crew, paired devices, vessel documents, '
+     + '(theme, its own scoped storage, navigation). It has <b>no access</b> to crew links, vessel documents, '
      + 'certificates, pairing secrets or the network. QR pairing is a trust bootstrap, not a plugin authorization layer.</div>';
   if(m.safety && m.safety.requires_disclaimer){
     h += '<div class="apps-safety"><b>Disclaimer</b> — '+esc(m.safety.disclaimer||'This plugin is not certified equipment.')+'</div>';
@@ -1190,7 +1446,7 @@ function verTagClick(){
 updateVerTag();
 (function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
 loadBundledPlugins();
-showModule('crew');
+showLaunch('choice');
 </script>
 </body>
 </html>
