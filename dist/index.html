@@ -798,28 +798,73 @@ function crewStat(k, v, s){
   return '<div class="crew-stat"><div class="crew-stat-k">'+esc(k)+'</div>'
        + '<div class="crew-stat-v">'+esc(v)+'</div><div class="crew-stat-s">'+esc(s)+'</div></div>';
 }
+function crewSettingsOpen(){
+  var ov=document.getElementById('settings-overlay');
+  return !!(ov && ov.classList && ov.classList.contains('open'));
+}
+function crewAfterRosterRender(){
+  if(crewSettingsOpen()) renderSettings();
+  else if(currentModule==='crew') renderCrew();
+}
+function crewRosterRows(){
+  return Array.isArray(crewState.roster) ? crewState.roster : [];
+}
+function crewActiveRows(){
+  return crewRosterRows().filter(function(r){ return ['left','revoked'].indexOf(String(r.status||''))<0; });
+}
+function crewRecentRows(){
+  var weekAgo=Date.now()-7*24*60*60*1000;
+  return crewActiveRows().filter(function(r){
+    var ts=Date.parse(r.linked_at||r.created_at||r.updated_at||'');
+    return isFinite(ts) && ts>=weekAgo;
+  });
+}
+function crewRosterCardHtml(r, mainView){
+  var id=String(r.id||'');
+  var h='<div class="'+(mainView?'crew-member-card':'set-card')+'" style="margin-top:10px">';
+  h+='<div class="pair-meta"><span class="pair-meta-k">Имя</span><span class="pair-meta-v">'+esc(r.display_name||r.name||'—')+'</span></div>';
+  h+='<div class="pair-meta"><span class="pair-meta-k">Должн.</span><span class="pair-meta-v">'+esc(r.rank||r.position||'—')+'</span></div>';
+  h+='<div class="pair-meta"><span class="pair-meta-k">Статус</span><span class="pair-meta-v"><span class="set-pill">'+esc(r.status||'—')+'</span></span></div>';
+  h+='<div class="pair-meta"><span class="pair-meta-k">Привязан</span><span class="pair-meta-v">'+esc(String(r.linked_at||r.created_at||'').slice(0,10)||'—')+'</span></div>';
+  if(!mainView) h+='<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewRevoke(\''+esc(id)+'\')">Отвязать · Revoke</button>';
+  h+='</div>';
+  return h;
+}
 function renderCrew(){
+  if(crewLive() && !crewState.roster && !crewState.rosterLoading && !crewState.rosterErr){
+    setTimeout(function(){ if(currentModule==='crew') crewLoadRoster(); },0);
+  }
+  var rows=crewActiveRows();
+  var linked=rows.filter(function(r){ return String(r.status||'')==='linked'; });
+  var pending=(crewState.invite && crewState.invite.expires_at && Date.parse(crewState.invite.expires_at)>Date.now()) ? 1 : 0;
   var h = '<div class="apps-screen">';
   h += '<div class="apps-head"><div class="apps-head-row"><div>'
      + '<div class="apps-head-title">Crew</div>'
      + '<div class="apps-head-sub">The people linked to this vessel. Crew accept a vessel invite from '
      + '<b>Skipi Seafarer</b> — On&nbsp;Board never receives a seafarer’s whole personal vault, only the onboard workflow they explicitly share.</div>'
      + '</div><button class="pair-cta" type="button" onclick="openPairing()">🔗 Invite crew member</button></div></div>';
-  // placeholder stat cards
   h += '<div class="crew-stats">'
-     + crewStat('Total crew', '0', 'linked seafarers')
-     + crewStat('Linked crew', '0', 'accepted vessel invites')
-     + crewStat('Pending invites', '0', 'awaiting scan')
-     + crewStat('Recent onboarding', '—', 'last 7 days')
+     + crewStat('Total crew', crewLive()?String(rows.length):'0', crewLive()?'active linked seafarers':'backend not connected')
+     + crewStat('Linked crew', crewLive()?String(linked.length):'0', 'accepted vessel invites')
+     + crewStat('Pending invites', crewLive()?String(pending):'0', 'awaiting scan')
+     + crewStat('Recent onboarding', crewLive()?String(crewRecentRows().length):'—', 'last 7 days')
      + '</div>';
-  // linked crew — empty state
   h += '<div class="crew-section-t">Linked crew</div>';
-  h += '<div class="crew-empty"><div class="crew-empty-icon">👥</div>'
-     + '<div class="crew-empty-t">No linked crew yet</div>'
-     + '<div class="crew-empty-s">Invite the first crew member: show the vessel QR/code and have them accept it in Skipi Seafarer. '
-     + 'Linked crew and their onboarding status will appear here.</div>'
-     + '<button class="pair-cta" type="button" onclick="openPairing()">🔗 Invite crew member</button></div>';
-  // privacy note
+  if(crewLive() && crewState.rosterLoading){
+    h += '<div class="set-card set-hint">Loading crew roster…</div>';
+  }else if(crewLive() && crewState.rosterErr){
+    h += '<div class="set-card"><div class="set-pill warn">Could not load crew roster</div><div class="set-hint" style="margin-top:8px">'+esc(crewState.rosterErr)+'</div>'
+      + '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewLoadRoster()">Обновить · Refresh</button></div>';
+  }else if(crewLive() && rows.length){
+    rows.forEach(function(r){ h += crewRosterCardHtml(r, true); });
+    h += '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="crewLoadRoster()">Обновить · Refresh</button>';
+  }else{
+    h += '<div class="crew-empty"><div class="crew-empty-icon">👥</div>'
+       + '<div class="crew-empty-t">No linked crew yet</div>'
+       + '<div class="crew-empty-s">Invite the first crew member: show the vessel QR/code and have them accept it in Skipi Seafarer. '
+       + 'Linked crew and their onboarding status will appear here.</div>'
+       + '<button class="pair-cta" type="button" onclick="openPairing()">🔗 Invite crew member</button></div>';
+  }
   h += '<div class="apps-note" style="margin-top:18px;"><b>Privacy</b> — On&nbsp;Board does not receive a seafarer’s whole personal vault. '
      + 'Crew linking opens only a scoped, consented channel; documents, CV and personal data stay on the seafarer’s device unless they explicitly share a specific onboard item.</div>';
   h += '</div>';
@@ -979,11 +1024,11 @@ function copyCrewCode(){ var inv=crewState.invite; if(inv) copyText(crewInviteMa
 
 // --- live roster ---
 function crewLoadRoster(){
-  if(!crewLive()){ crewState.roster=null; renderSettings(); return; }
-  crewState.rosterLoading=true; crewState.rosterErr=null; renderSettings();
+  if(!crewLive()){ crewState.roster=null; crewAfterRosterRender(); return; }
+  crewState.rosterLoading=true; crewState.rosterErr=null; crewAfterRosterRender();
   crewFetch('GET', '/api/onboard/crew?vessel_imo='+encodeURIComponent(crewConfig().vessel_imo), null)
-    .then(function(res){ crewState.roster = (res && res.items) ? res.items : (Array.isArray(res)?res:[]); crewState.rosterLoading=false; renderSettings(); })
-    .catch(function(e){ crewState.roster=null; crewState.rosterErr=''+e; crewState.rosterLoading=false; renderSettings(); });
+    .then(function(res){ crewState.roster = (res && res.items) ? res.items : (Array.isArray(res)?res:[]); crewState.rosterLoading=false; crewAfterRosterRender(); })
+    .catch(function(e){ crewState.roster=null; crewState.rosterErr=''+e; crewState.rosterLoading=false; crewAfterRosterRender(); });
 }
 function crewRevoke(id){
   if(!crewLive() || !id) return;
@@ -1514,7 +1559,12 @@ function regenerateInvite(){
   pairing.invite = buildInvite();
   renderPairing();
 }
-function closePairing(){ stopPairingTimer(); stopCrewInviteTimer(); renderCrew(); }
+function closePairing(){
+  stopPairingTimer();
+  stopCrewInviteTimer();
+  if(crewLive()) crewLoadRoster();
+  else renderCrew();
+}
 
 function crewPairingRequestInvite(){
   crewState.inviteLoading=true; crewState.inviteErr=null; crewState.invite=null;
