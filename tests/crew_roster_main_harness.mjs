@@ -79,6 +79,7 @@ globalThis.fetch = async (url, opt) => {
 const EXPORTS = [
   'renderCrew', 'openPairing', 'closePairing', 'crewLoadRoster', 'crewLive',
   'saveCrewConfig', 'stopCrewInviteTimer', 'stopPairingTimer', 'crewState',
+  'launchShouldEnterExistingShell',
 ];
 let M;
 try { M = new Function(script + '\nreturn {' + EXPORTS.join(',') + '};')(); }
@@ -113,6 +114,7 @@ rosterItems = [{
   linked_at: '2026-06-27T18:17:19Z',
 }];
 ok(M.crewLive() === true, 'dev live config enables crewLive');
+ok(M.launchShouldEnterExistingShell() === true, 'configured live vessel skips first-run launch screen');
 M.crewState.roster = rosterItems;
 M.renderCrew();
 let html = els.get('scr-content').innerHTML;
@@ -121,6 +123,16 @@ ok(html.includes('master'), 'rank is visible');
 ok(html.includes('Linked crew'), 'stats section rendered');
 ok(html.includes('>1<') || html.includes('crew-stat-v">1'), 'live count is 1');
 ok(!html.includes('ONBOARD-TOKEN-SECRET'), 'token is not rendered');
+
+section('first-run launch still appears when live context is incomplete');
+M.saveCrewConfig({ api_base: 'https://api.example.test', onboard_token: 'ONBOARD-TOKEN-SECRET' });
+ok(M.launchShouldEnterExistingShell() === false, 'missing vessel IMO does not skip first-run launch screen');
+M.saveCrewConfig({
+  api_base: 'https://api.example.test',
+  onboard_token: 'ONBOARD-TOKEN-SECRET',
+  vessel_imo: '7533197',
+  vessel_name: 'M/V AVDEEVKA',
+});
 
 section('closePairing refreshes roster');
 fetchCalls = [];

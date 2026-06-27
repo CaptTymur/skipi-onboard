@@ -464,6 +464,9 @@ function launchEnterShell(msg){
   showModule('crew');
   if(msg) showToast(msg);
 }
+function launchShouldEnterExistingShell(){
+  return crewLive() && crewConfigMissing().length===0;
+}
 function launchDemo(){
   launchSaveContext('demo', { vessel_name:'Demo vessel' });
   launchEnterShell('Demo vessel opened');
@@ -2127,7 +2130,8 @@ if(!(typeof window!=='undefined' && window.__ONBOARD_NO_BOOT__)){
   updateVerTag();
   (function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
   loadBundledPlugins();
-  showLaunch('choice');
+  if(launchShouldEnterExistingShell()) launchEnterShell();
+  else showLaunch('choice');
 }
 </script>
 </body>
