@@ -94,6 +94,30 @@
   .apps-perm-row.clear .apps-perm-dot { background:rgba(63,157,106,.16); color:var(--green); }
   .apps-perm-row.used .apps-perm-dot { background:rgba(201,133,47,.18); color:var(--orange); }
   .apps-actions { margin-top:20px; }
+  /* ---- Apps compact plugin launcher v2 (UI Standard) ---- */
+  .apps-launch-bar { display:flex; align-items:center; gap:10px; margin:2px 0 16px; }
+  .apps-search { flex:1; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border);
+    border-radius:9px; padding:0 12px; height:38px; }
+  .apps-search:focus-within { border-color:var(--accent); background:#fff; }
+  .apps-search-ico { color:var(--text2); font-size:14px; }
+  .apps-search input { flex:1; border:0; outline:0; background:transparent; font-size:14px; color:var(--text); font-family:var(--font-ui); }
+  .apps-gear-btn { width:38px; height:38px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:9px;
+    border:1px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; font-size:17px; }
+  .apps-gear-btn:hover { color:var(--accent); border-color:var(--accent); background:var(--accent-bg); }
+  .apps-sec-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--text2); margin:4px 0 10px; }
+  .apps-launch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:14px; }
+  .apps-launch-tile-wrap { display:flex; }
+  .apps-launch-tile { flex:1; display:flex; flex-direction:column; align-items:center; gap:9px; padding:15px 8px; border:1px solid var(--border);
+    border-radius:12px; background:var(--surface); cursor:pointer; text-align:center; transition:border-color .12s, background .12s; }
+  .apps-launch-tile:hover { border-color:var(--accent); background:var(--accent-bg); }
+  .apps-launch-ico { width:50px; height:50px; display:flex; align-items:center; justify-content:center; font-size:27px;
+    border-radius:13px; background:var(--accent-bg); color:var(--accent); }
+  .apps-launch-name { font-size:12.5px; font-weight:700; color:var(--text); line-height:1.2; }
+  .apps-launch-sub { font-size:10.5px; color:var(--text2); line-height:1.2; }
+  .apps-state { text-align:center; padding:34px 16px; color:var(--text2); }
+  .apps-state-ico { font-size:32px; opacity:.65; }
+  .apps-state-t { font-weight:700; color:var(--text); margin-top:9px; font-size:14px; }
+  .apps-state-s { font-size:13px; margin-top:5px; line-height:1.45; }
   .btn { font-size:14px; font-weight:700; border-radius:9px; padding:11px 18px; border:1px solid var(--border); cursor:pointer; }
   .btn-outline { background:var(--surface); color:var(--text2); }
   .btn-outline[disabled] { cursor:not-allowed; opacity:.7; }
@@ -165,36 +189,48 @@
     cursor:pointer; color:var(--text); font-size:21px; margin-left:6px; background:var(--bg); border:1px solid var(--border); line-height:1; }
   .mb-gear:hover { color:var(--accent); background:var(--accent-bg); border-color:var(--accent); }
   .mb-gear.active { color:var(--accent); background:var(--accent-bg); border-color:var(--accent); }
-  .settings-overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.28);
+  .settings-overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(15,23,42,.26);
     align-items:center; justify-content:center; padding:24px; }
   .settings-overlay.open { display:flex; }
-  .settings-modal { position:relative; width:min(900px,92vw); height:min(650px,88vh); background:var(--surface);
-    border-radius:12px; display:flex; overflow:hidden; box-shadow:0 20px 60px rgba(15,23,42,.22); border:1px solid var(--border); }
-  .settings-nav { width:220px; background:var(--bg); border-right:1px solid var(--border); padding:12px 0; overflow-y:auto; flex-shrink:0; }
-  .settings-nav-title { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); padding:12px 16px 4px; font-weight:700; }
-  .settings-nav-item { padding:7px 16px; font-size:13px; cursor:pointer; color:var(--text); display:flex; align-items:center; gap:8px; border-radius:0; }
-  .settings-nav-item:hover { background:var(--hover); }
-  .settings-nav-item.active { background:var(--accent-bg); color:var(--accent); }
-  .settings-nav-item .nav-icon { width:18px; text-align:center; font-size:14px; opacity:.76; }
-  .settings-body { flex:1; overflow-y:auto; padding:28px 32px; }
-  .settings-close { position:absolute; top:12px; right:16px; width:28px; height:28px; display:flex; align-items:center;
-    justify-content:center; cursor:pointer; border:none; border-radius:4px; color:var(--text2); background:transparent; font-size:18px; z-index:101; }
+  .settings-modal { position:relative; width:min(980px,92vw); height:min(720px,88vh); background:#fff;
+    border-radius:18px; display:grid; grid-template-columns:286px minmax(0,1fr); overflow:hidden;
+    box-shadow:0 18px 44px rgba(15,23,42,.14); border:1px solid #cfd7df; }
+  .settings-nav { min-width:0; background:#f1f3f5; border-right:1px solid var(--border);
+    padding:18px 14px; overflow-y:auto; }
+  .settings-sidebar-head { padding:0 8px 16px; }
+  .settings-traffic { display:flex; gap:8px; margin-bottom:22px; }
+  .settings-traffic span { width:12px; height:12px; border-radius:50%; background:#d7dce2; }
+  .settings-sidebar-head h2 { margin:0 0 6px; font-size:20px; line-height:1.2; font-weight:800; }
+  .settings-sidebar-head p { margin:0; color:var(--text2); font-size:12px; line-height:1.4; }
+  .settings-nav-list { display:grid; gap:4px; }
+  .settings-nav-item { width:100%; min-height:44px; display:grid; grid-template-columns:28px minmax(0,1fr);
+    align-items:center; gap:9px; border:0; border-radius:10px; background:transparent; color:var(--text);
+    padding:7px 10px; cursor:pointer; text-align:left; font:inherit; }
+  .settings-nav-item:hover { background:#fff; }
+  .settings-nav-item.active { background:#fff; box-shadow:inset 0 0 0 1px var(--border); color:var(--text); }
+  .settings-nav-item .nav-icon { width:26px; height:26px; border-radius:8px; display:grid; place-items:center;
+    color:var(--accent); background:#fff; border:1px solid var(--border); font-size:12px; font-weight:800; }
+  .settings-nav-item.active .nav-icon { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .settings-nav-item .nav-label { min-width:0; font-size:13px; line-height:1.25; font-weight:650; overflow-wrap:anywhere; }
+  .settings-body { min-width:0; overflow-y:auto; padding:30px 34px; background:#fff; }
+  .settings-close { position:absolute; top:16px; right:18px; width:32px; height:32px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; border:1px solid var(--border); border-radius:9px; color:var(--text2); background:#fff; font-size:18px; z-index:101; }
   .settings-close:hover { background:var(--hover); color:var(--text); }
   .set-screen { max-width:680px; }
   .set-sec { margin:0 0 28px; }
-  .set-sec-title { font-size:13px; font-weight:800; color:var(--text); margin-bottom:11px; }
-  .set-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .set-sec-title { font-size:12px; line-height:1.2; font-weight:800; color:var(--text2); text-transform:uppercase; margin:24px 0 8px; }
+  .set-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px; }
   .settings-section { margin-bottom:28px; }
-  .settings-section h3 { font-size:20px; font-weight:650; margin:0 0 4px; }
-  .settings-section .section-desc { font-size:12px; color:var(--text2); line-height:1.45; margin-bottom:18px; }
-  .setting-row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 16px;
-    border-bottom:1px solid var(--border); background:var(--bg); }
-  .setting-row:first-of-type { border-radius:8px 8px 0 0; }
-  .setting-row:last-of-type { border-bottom:none; border-radius:0 0 8px 8px; }
-  .setting-row:only-of-type { border-radius:8px; }
+  .settings-section h3 { font-size:26px; line-height:1.15; font-weight:800; margin:0 0 8px; padding-right:44px; }
+  .settings-section .section-desc { font-size:14px; color:var(--text2); line-height:1.45; margin-bottom:22px; max-width:620px; }
+  .setting-row { min-height:68px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+    gap:18px; padding:14px 16px; border-bottom:1px solid var(--border); background:#fff; }
+  .setting-row:first-of-type { border-radius:14px 14px 0 0; }
+  .setting-row:last-of-type { border-bottom:none; border-radius:0 0 14px 14px; }
+  .setting-row:only-of-type { border-radius:14px; }
   .setting-info { flex:1; min-width:0; }
-  .setting-label { font-size:13px; font-weight:600; color:var(--text); }
-  .setting-desc { font-size:11.5px; color:var(--text2); margin-top:3px; line-height:1.45; word-break:break-word; }
+  .setting-label { font-size:14px; line-height:1.25; font-weight:700; color:var(--text); }
+  .setting-desc { font-size:13px; color:var(--text2); margin-top:4px; line-height:1.4; word-break:break-word; }
   .setting-control { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
   .set-pill { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:3px 9px; border-radius:999px; background:var(--hover); color:var(--text2); }
   .set-pill.warn { background:rgba(201,133,47,.16); color:var(--orange); }
@@ -270,14 +306,16 @@
     .bar-note { display:none; }
     .mb-vessel { max-width:150px; }
     .settings-overlay { padding:0; align-items:stretch; justify-content:stretch; }
-    .settings-modal { width:100vw; height:100dvh; max-height:none; border-radius:0; flex-direction:column; }
-    .settings-nav { width:100%; display:flex; gap:4px; overflow-x:auto; overflow-y:hidden; border-right:none; border-bottom:1px solid var(--border); padding:8px 10px; }
-    .settings-nav-title { display:none; }
-    .settings-nav-item { flex:0 0 auto; border-radius:8px; padding:9px 11px; white-space:nowrap; }
+    .settings-modal { width:100vw; height:100dvh; max-height:none; border-radius:0; grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); }
+    .settings-nav { width:100%; overflow-x:auto; overflow-y:hidden; border-right:none; border-bottom:1px solid var(--border); padding:8px 10px; }
+    .settings-sidebar-head { display:none; }
+    .settings-nav-list { display:flex; gap:4px; }
+    .settings-nav-item { flex:0 0 auto; display:flex; min-height:40px; border-radius:10px; padding:8px 11px; white-space:nowrap; }
+    .settings-nav-item .nav-icon { width:24px; height:24px; }
     .settings-body { flex:1; padding:18px 14px 28px; }
     .settings-close { top:10px; right:10px; width:40px; height:40px; border:1px solid var(--border); border-radius:8px; background:var(--surface); font-size:22px; }
-    .settings-section h3 { padding-right:48px; }
-    .setting-row { align-items:flex-start; flex-direction:column; gap:8px; }
+    .settings-section h3 { padding-right:48px; font-size:22px; }
+    .setting-row { align-items:flex-start; grid-template-columns:1fr; gap:8px; }
   }
 </style>
 </head>
@@ -288,9 +326,10 @@
       <span class="tag">United Seafarers</span>
     </div>
     <div class="mod-tabs">
-      <div class="mod-tab" data-mod="crew" onclick="showModule('crew')">Crew</div>
-      <div class="mod-tab" data-mod="apps" onclick="showModule('apps')">Apps</div>
-      <div class="mod-tab" data-mod="vdocs" onclick="showModule('vdocs')">Vessel Documents</div>
+      <div class="mod-tab" data-mod="crew" data-qa="onboard-module-crew" onclick="showModule('crew')">Crew</div>
+      <div class="mod-tab" data-mod="myvessel" data-qa="onboard-module-myvessel" onclick="showModule('myvessel')">My Vessel</div>
+      <div class="mod-tab" data-mod="apps" data-qa="onboard-module-apps" onclick="showModule('apps')">Apps</div>
+      <div class="mod-tab" data-mod="vdocs" data-qa="onboard-module-vdocs" onclick="showModule('vdocs')">Vessel Documents</div>
     </div>
     <div class="bar-spacer"></div>
     <div class="bar-note">Local preview · no server · no account</div>
@@ -533,7 +572,10 @@ var SKIPI_APPS = [
   }
 ];
 
-var appsState = { selectedId:null };
+// appsState.view: 'launcher' (compact installed-plugin launcher, primary) | 'manage'
+// (full catalog + install/disable/state, opened via the launcher gear). selectedId
+// = a plugin/app detail screen. q = launcher search query (installed-only).
+var appsState = { selectedId:null, view:'launcher', q:'' };
 
 function appsById(id){ for(var i=0;i<SKIPI_APPS.length;i++){ if(SKIPI_APPS[i].id===id) return SKIPI_APPS[i]; } return null; }
 function appsCatLabel(key){ for(var i=0;i<SKIPI_APP_CATEGORIES.length;i++){ if(SKIPI_APP_CATEGORIES[i].key===key) return SKIPI_APP_CATEGORIES[i].label; } return key; }
@@ -550,11 +592,102 @@ function appsTileHtml(a){
     + '</span></button>';
 }
 
+// ---------- Apps — compact plugin launcher (UI Standard: Compact Plugin Launcher v2) ----------
+// Primary Apps surface = compact launcher of INSTALLED plugins as icon tiles +
+// search + a plugins-settings gear. The full catalog / install-disable / complex
+// states live behind the gear ("manage" view) so the launcher stays minimal
+// (Tymur: «только значки, минимализм, ничего лишнего»). Plugin runtime, registry
+// and integrity logic are untouched — this is presentation only.
+function installedPluginIds(){
+  return catalogPluginIds().filter(function(id){ return pluginUiState(id)==='installed'; });
+}
+function appsShortLabel(id){
+  var m = (SkipiPlugins[id] && SkipiPlugins[id].manifest) || {};
+  return m.short_name || m.name || id;
+}
+function appsLaunchTileHtml(id){
+  var m = (SkipiPlugins[id] && SkipiPlugins[id].manifest) || {};
+  var name = esc(appsShortLabel(id));
+  var sub = m.tagline ? '<span class="apps-launch-sub">'+esc(m.tagline)+'</span>' : '';
+  return '<div class="apps-launch-tile-wrap" data-qa="plugin-tile-'+esc(id)+'">'
+    + '<button class="apps-launch-tile" type="button" data-qa="plugin-open-'+esc(id)+'" title="'+name+'" onclick="pluginOpen(\''+esc(id)+'\')">'
+    + '<span class="apps-launch-ico">'+(m.icon||'🧩')+'</span>'
+    + '<span class="apps-launch-name">'+name+'</span>'+sub
+    + '</button></div>';
+}
+// Only the tiles+states region — re-rendered on search without touching the input.
+function appsLauncherBodyHtml(){
+  // Honest offline state (real navigator.onLine — no faking).
+  if(typeof navigator!=='undefined' && navigator.onLine===false){
+    return '<div class="apps-state" data-qa="plugin-offline-state"><div class="apps-state-ico">📡</div>'
+      + '<div class="apps-state-t">Нет сети</div>'
+      + '<div class="apps-state-s">Установленные плагины открываются офлайн; сетевые функции вернутся при подключении.</div></div>';
+  }
+  var h = '';
+  // Honest integrity-error state for any catalog plugin that failed its checksum.
+  var failed = catalogPluginIds().filter(function(id){ return pluginIntegrity[id] && pluginIntegrity[id].ok===false; });
+  if(failed.length){
+    h += '<div class="apps-state" data-qa="plugin-error-state" style="text-align:left;padding:14px 16px">'
+      + '<div class="apps-state-t">⚠ Плагин не загружен</div>'
+      + '<div class="apps-state-s">'+failed.length+' плагин(ов) не прошли проверку целостности и отключены. Подробности — в настройках плагинов.</div></div>';
+  }
+  var q = String(appsState.q||'').trim().toLowerCase();
+  var ids = installedPluginIds();
+  if(q){ ids = ids.filter(function(id){ return appsShortLabel(id).toLowerCase().indexOf(q)>=0; }); }
+  if(!ids.length){
+    if(q){
+      h += '<div class="apps-state" data-qa="plugin-empty-state"><div class="apps-state-ico">🔍</div>'
+        + '<div class="apps-state-t">Ничего не найдено</div>'
+        + '<div class="apps-state-s">Поиск ведётся только по установленным плагинам.</div></div>';
+    } else {
+      h += '<div class="apps-state" data-qa="plugin-empty-state"><div class="apps-state-ico">🧩</div>'
+        + '<div class="apps-state-t">Нет установленных плагинов</div>'
+        + '<div class="apps-state-s">Откройте настройки плагинов, чтобы посмотреть каталог и установить плагин.</div>'
+        + '<button class="btn btn-accent btn-sm" type="button" style="margin-top:14px" onclick="appsSetView(\'manage\')">Настройки плагинов</button></div>';
+    }
+    return h;
+  }
+  h += '<div class="apps-sec-title">Установленные плагины · Installed plugins</div>';
+  h += '<div class="apps-launch-grid">';
+  for(var i=0;i<ids.length;i++){ h += appsLaunchTileHtml(ids[i]); }
+  h += '</div>';
+  return h;
+}
+function appsLauncherHtml(){
+  var h = '<div class="apps-screen">';
+  h += '<div class="apps-launch-bar">'
+    + '<div class="apps-search"><span class="apps-search-ico">🔍</span>'
+    + '<input id="apps-search-input" data-qa="apps-search-input" type="text" autocomplete="off" spellcheck="false" '
+    + 'placeholder="Найти плагин…" value="'+esc(appsState.q||'')+'" oninput="appsFilter(this.value)">'
+    + '</div>'
+    + '<button class="apps-gear-btn" type="button" data-qa="plugins-settings-open" title="Настройки плагинов · Plugin settings" onclick="appsSetView(\'manage\')">⚙</button>'
+    + '</div>';
+  h += '<div id="apps-launch-body">'+appsLauncherBodyHtml()+'</div>';
+  h += '</div>';
+  return h;
+}
+// Live filter — re-render only the tiles region so the search input keeps focus.
+function appsFilter(val){
+  appsState.q = val || '';
+  var el = document.getElementById('apps-launch-body');
+  if(el) el.innerHTML = appsLauncherBodyHtml();
+}
+function appsSetView(v){
+  appsState.view = v;
+  appsState.selectedId = null;
+  if(v!=='launcher') appsState.q = '';
+  renderApps();
+}
+
+// Manage view = full catalog + install/disable/state, reached via the launcher
+// gear. This is the former primary Apps grid; complex states live here, not on
+// the compact launcher.
 function appsListHtml(){
   var h = '<div class="apps-screen">';
-  h += '<div class="apps-head"><div class="apps-head-title">Apps</div>'
-     + '<div class="apps-head-sub">Onboard tools for this vessel — official Skipi applications, not a marketplace and no third-party code. '
-     + 'Most are seeds of the onboard product and become active once device pairing and the ship node land. '
+  h += '<button class="apps-back" type="button" onclick="appsSetView(\'launcher\')">← Plugins</button>';
+  h += '<div class="apps-head"><div class="apps-head-title">Plugin settings · Каталог</div>'
+     + '<div class="apps-head-sub">Установка, включение и состояние плагинов. Первичный экран Apps — компактный лаунчер; полный каталог и сложные '
+     + 'состояния живут здесь. Официальные приложения Skipi, не маркетплейс и без стороннего кода. '
      + '(Crew pairing lives in the <b>Crew</b> module.)</div></div>';
   // Plugins section — bundled first-party plugins with real Install/Open/Disable
   // state. Dev-only self-test fixtures are hidden unless developer mode is on.
@@ -609,7 +742,7 @@ function appsDetailHtml(app){
 // ===================== Module shell (Crew / Apps / Vessel Documents) =====================
 // Three base modules. Crew = people + QR pairing; Apps = onboard tools;
 // Vessel Documents = the ship's document vault (scaffold). All local-only.
-var currentModule = 'crew'; // 'crew' | 'apps' | 'vdocs'
+var currentModule = 'crew'; // 'crew' | 'myvessel' | 'apps' | 'vdocs'
 function setActiveTab(mod){
   var tabs = document.querySelectorAll('.mod-tab');
   for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('active', tabs[i].getAttribute('data-mod')===mod); }
@@ -638,6 +771,7 @@ function showModule(mod){
   updateVesselChip();
   if(mod==='apps'){ renderApps(); }
   else if(mod==='vdocs'){ renderVesselDocs(); }
+  else if(mod==='myvessel'){ loadMyVessel(); }
   else { renderCrew(); }
 }
 
@@ -646,7 +780,10 @@ function renderApps(){
   if(appsState.selectedId){
     if(isBundledPlugin(appsState.selectedId)) setContent(pluginDetailHtml(appsState.selectedId));
     else setContent(appsDetailHtml(appsById(appsState.selectedId)));
-  } else setContent(appsListHtml());
+    return;
+  }
+  if(appsState.view==='manage'){ setContent(appsListHtml()); return; }
+  setContent(appsLauncherHtml());
 }
 function appsSelect(id){ appsState.selectedId = id; renderApps(); }
 function appsBack(){ appsState.selectedId = null; renderApps(); }
@@ -850,6 +987,252 @@ function crewRevoke(id){
     .catch(function(e){ showToast('Ошибка: '+e); });
 }
 
+// =========================================================================
+// My Vessel — read the Skipi vessel-database record for the selected vessel.
+//
+// Onboarding intent: when On Board is installed, you choose a vessel. Selection
+// is by IMO from the Skipi database (the whole family looks vessels up by IMO;
+// there is no name search endpoint). GET /api/vessels/{imo} is a PUBLIC read,
+// so this works once an API base is configured — it does NOT need the dormant
+// crew backend flag. The onboard_token is attached only if present and never
+// leaves host scope / is never shown. Editing the vessel record is NOT offered
+// yet (read-only); the user will get that later.
+// =========================================================================
+var myVesselState   = { loading:false, data:null, err:null, imo:null }; // module fetch
+var vesselLookupState = { loading:false, result:null, err:null, imo:null }; // settings picker
+
+function vesselApiBase(){ return String(crewConfig().api_base||'').replace(/\/+$/,''); }
+function vesselConfigReady(){ return !!vesselApiBase(); }
+function normalizeImo(s){ return String(s==null?'':s).replace(/[^0-9]/g,'').slice(0,7); }
+function joinNC(name, country){ if(!name) return ''; return country ? (name+' ('+country+')') : name; }
+
+// Public vessel read. Bearer attached only if a token exists; it is used here
+// and never returned to a caller. Normalized envelope -> honest states.
+function vesselFetch(imo){
+  var c = crewConfig();
+  var headers = {};
+  if(c.onboard_token) headers['Authorization'] = 'Bearer '+c.onboard_token;
+  return fetch(vesselApiBase()+'/api/vessels/'+encodeURIComponent(imo), { headers:headers }).then(function(r){
+    if(r.status===404) return { ok:false, state:'not_found' };
+    if(!r.ok) return r.text().then(function(t){ return { ok:false, state:'unavailable', message:'HTTP '+r.status+(t?(' '+t.slice(0,120)):'') }; });
+    return r.json().then(function(j){ return { ok:true, state:'ok', vessel:j }; });
+  }).catch(function(e){ return { ok:false, state:'unavailable', message:''+e }; });
+}
+
+// ---- settings picker actions ----
+function vesselLookup(){
+  var el = document.getElementById('mv-imo-input');
+  var imo = el ? normalizeImo(el.value) : '';
+  if(imo.length!==7){ showToast('Введите 7-значный IMO'); return; }
+  if(!vesselConfigReady()){ vesselLookupState={loading:false,result:null,err:'no_config',imo:imo}; renderSettings(); return; }
+  vesselLookupState={loading:true,result:null,err:null,imo:imo}; renderSettings();
+  vesselFetch(imo).then(function(r){
+    vesselLookupState = r.ok
+      ? {loading:false,result:r.vessel,err:null,imo:imo}
+      : {loading:false,result:null,err:(r.state||'unavailable'),imo:imo};
+    renderSettings();
+  });
+}
+function vesselSelect(){
+  var v = vesselLookupState.result; if(!v) return;
+  var c = crewConfig();
+  c.vessel_imo  = String(v.imo);
+  c.vessel_name = v.name_current || ('IMO '+v.imo);
+  c.vessel_type = v.vessel_type || '';
+  c.vessel_flag = v.flag_current || '';
+  c.vessel_mode = 'selected';
+  saveCrewConfig(c);
+  updateVesselChip();
+  vesselLookupState = {loading:false,result:null,err:null,imo:null};
+  myVesselState = {loading:false,data:null,err:null,imo:null}; // force module refresh next open
+  showToast('Судно выбрано: '+c.vessel_name);
+  renderSettings();
+}
+function vesselClearSelection(){
+  if(!window.confirm('Убрать выбранное судно?')) return;
+  var c = crewConfig();
+  delete c.vessel_imo; delete c.vessel_type; delete c.vessel_flag;
+  c.vessel_name=''; c.vessel_mode='local';
+  saveCrewConfig(c); updateVesselChip();
+  myVesselState = {loading:false,data:null,err:null,imo:null};
+  renderSettings();
+}
+function showMyVesselFromSettings(){ closeSettings(); showModule('myvessel'); }
+
+function renderMyVesselSettings(){
+  var c = crewConfig();
+  var h = '';
+  // current selection
+  h += '<div class="set-sec"><div class="set-sec-title">Текущее судно · Current vessel</div><div class="set-card">';
+  if(c.vessel_imo){
+    h += '<div class="pair-meta"><span class="pair-meta-k">Судно</span><span class="pair-meta-v">'+esc(c.vessel_name||('IMO '+c.vessel_imo))+'</span></div>';
+    h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">'+esc(c.vessel_imo)+'</span></div>';
+    if(c.vessel_type){ h += '<div class="pair-meta"><span class="pair-meta-k">Тип</span><span class="pair-meta-v">'+esc(c.vessel_type)+'</span></div>'; }
+    if(c.vessel_flag){ h += '<div class="pair-meta"><span class="pair-meta-k">Флаг</span><span class="pair-meta-v">'+esc(c.vessel_flag)+'</span></div>'; }
+    h += '<div class="pair-meta"><span class="pair-meta-k">Режим</span><span class="pair-meta-v"><span class="set-pill">'+esc(c.vessel_mode||'selected')+'</span></span></div>';
+    h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+    h += '<button class="btn btn-accent btn-sm" type="button" onclick="showMyVesselFromSettings()">Открыть «My Vessel»</button>';
+    h += '<button class="btn btn-outline btn-sm" type="button" onclick="vesselClearSelection()">Сбросить выбор</button>';
+    h += '</div>';
+  } else {
+    h += '<div class="set-pill warn">Судно не выбрано</div>';
+    h += '<div class="set-hint" style="margin-top:8px">Выберите судно из базы данных Skipi по IMO ниже. После выбора оно появится в модуле «My Vessel» и в чипе судна вверху.</div>';
+  }
+  h += '</div></div>';
+
+  // lookup / select from database
+  h += '<div class="set-sec"><div class="set-sec-title">Выбрать судно из базы Skipi · Select from database</div><div class="set-card">';
+  if(!vesselConfigReady()){
+    h += '<div class="set-pill warn">Сначала укажите API base</div>';
+    h += '<div class="set-hint" style="margin-top:8px">База судов Skipi доступна после настройки API base в разделе «Подключение».</div>';
+    h += '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="settingsSetTab(\'connection\')">Открыть Подключение</button>';
+  } else {
+    h += '<label class="set-lbl">IMO судна</label>';
+    h += '<input id="mv-imo-input" class="set-inp" inputmode="numeric" maxlength="7" placeholder="7-значный IMO" value="'+esc(vesselLookupState.imo||'')+'">';
+    h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" type="button" onclick="vesselLookup()">Найти в базе Skipi</button></div>';
+    if(vesselLookupState.loading){
+      h += '<div class="set-hint" style="margin-top:12px">Поиск в базе Skipi…</div>';
+    } else if(vesselLookupState.err){
+      var em = vesselLookupState.err==='not_found' ? 'Судно с таким IMO не найдено в базе Skipi.'
+             : vesselLookupState.err==='no_config' ? 'API base не задан.'
+             : 'Не удалось обратиться к базе Skipi.';
+      h += '<div class="set-pill warn" style="margin-top:12px">'+esc(em)+'</div>';
+      h += '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="vesselLookup()">Повторить</button>';
+    } else if(vesselLookupState.result){
+      var v = vesselLookupState.result;
+      var sel = String(c.vessel_imo||'')===String(v.imo);
+      h += '<div class="set-card" style="margin-top:12px;background:var(--accent-bg)">';
+      h += '<div class="set-sec-title">'+esc(v.name_current||('IMO '+v.imo))+'</div>';
+      h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">'+esc(v.imo)+'</span></div>';
+      h += '<div class="pair-meta"><span class="pair-meta-k">Тип</span><span class="pair-meta-v">'+esc(v.vessel_type||'—')+'</span></div>';
+      h += '<div class="pair-meta"><span class="pair-meta-k">Флаг</span><span class="pair-meta-v">'+esc(v.flag_current||'—')+'</span></div>';
+      h += '<div class="pair-meta"><span class="pair-meta-k">Год</span><span class="pair-meta-v">'+esc(v.built_year||'—')+'</span></div>';
+      var mgr = joinNC(v.current_technical_manager_name, v.current_technical_manager_country) || v.operator_company || '';
+      if(mgr){ h += '<div class="pair-meta"><span class="pair-meta-k">Менеджер</span><span class="pair-meta-v">'+esc(mgr)+'</span></div>'; }
+      h += '<button class="btn btn-accent" type="button" style="margin-top:12px" onclick="vesselSelect()"'+(sel?' disabled':'')+'>'+(sel?'Уже выбрано':'Выбрать это судно')+'</button>';
+      h += '</div>';
+    }
+    h += '<div class="set-hint" style="margin-top:12px">Поиск по номеру IMO в базе судов Skipi (<code>GET /api/vessels/{imo}</code>). '
+      + 'Токен судна не передаётся в открытом виде и не покидает приложение. Редактирование карточки судна будет добавлено позже.</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+// ---- My Vessel module ----
+function loadMyVessel(force){
+  var imo = crewConfig().vessel_imo;
+  if(!imo){ myVesselState={loading:false,data:null,err:null,imo:null}; renderMyVessel(); return; }
+  if(!vesselConfigReady()){ myVesselState={loading:false,data:null,err:'no_config',imo:String(imo)}; renderMyVessel(); return; }
+  if(!force && myVesselState.data && myVesselState.imo===String(imo)){ renderMyVessel(); return; }
+  myVesselState={loading:true,data:null,err:null,imo:String(imo)}; renderMyVessel();
+  vesselFetch(imo).then(function(r){
+    myVesselState = r.ok
+      ? {loading:false,data:r.vessel,err:null,imo:String(imo)}
+      : {loading:false,data:null,err:(r.state||'unavailable'),imo:String(imo)};
+    renderMyVessel();
+  });
+}
+function renderMyVessel(){ setContent(myVesselHtml()); }
+function mvRow(k, v){
+  return '<div class="pair-meta"><span class="pair-meta-k">'+esc(k)+'</span><span class="pair-meta-v">'+esc((v==null||v==='')?'—':v)+'</span></div>';
+}
+function mvCard(title, inner){
+  return '<div class="set-card" style="margin-top:12px"><div class="set-sec-title">'+esc(title)+'</div>'+inner+'</div>';
+}
+function myVesselHtml(){
+  var c = crewConfig();
+  var imo = c.vessel_imo;
+  var h = '<div class="apps-screen">';
+  h += '<div class="apps-head"><div class="apps-head-row"><div>'
+     + '<div class="apps-head-title">My Vessel · Моё судно</div>'
+     + '<div class="apps-head-sub">Карточка судна из базы данных Skipi. Данные только для чтения — редактирование появится позже.</div>'
+     + '</div>';
+  if(imo){ h += '<button class="pair-cta" type="button" onclick="loadMyVessel(true)">↻ Обновить</button>'; }
+  h += '</div></div>';
+
+  if(!imo){
+    h += '<div class="crew-empty"><div class="crew-empty-icon">🚢</div>'
+       + '<div class="crew-empty-t">Судно не выбрано</div>'
+       + '<div class="crew-empty-s">Выберите судно из базы данных Skipi: Settings → «Моё судно» → введите IMO и подтвердите. '
+       + 'После этого здесь появится карточка судна.</div>'
+       + '<button class="pair-cta" type="button" onclick="showSettings(\'vessel\')">Выбрать судно</button></div>';
+    return h + '</div>';
+  }
+
+  // headline
+  h += '<div class="crew-stats">'
+     + crewStat('Судно', c.vessel_name || ('IMO '+imo), 'выбрано')
+     + crewStat('IMO', String(imo), 'идентификатор')
+     + crewStat('Флаг', c.vessel_flag || '—', 'flag state')
+     + crewStat('Тип', c.vessel_type || '—', 'vessel type')
+     + '</div>';
+
+  if(!vesselConfigReady()){
+    h += mvCard('База данных Skipi', '<div class="set-pill warn">API base не задан</div>'
+      + '<div class="set-hint" style="margin-top:8px">Укажите API base в Settings → Подключение, чтобы загрузить карточку судна из базы Skipi.</div>'
+      + '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="showSettings(\'connection\')">Открыть Подключение</button>');
+    return h + '</div>';
+  }
+  if(myVesselState.loading){
+    h += mvCard('База данных Skipi', '<div class="set-hint">Загрузка карточки судна…</div>');
+    return h + '</div>';
+  }
+  if(myVesselState.err){
+    var msg = myVesselState.err==='not_found' ? 'Судно с таким IMO не найдено в базе Skipi.' : 'Не удалось загрузить карточку из базы Skipi.';
+    h += mvCard('База данных Skipi', '<div class="set-pill warn">'+esc(msg)+'</div>'
+      + '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="loadMyVessel(true)">Повторить</button>');
+    return h + '</div>';
+  }
+
+  var v = myVesselState.data || {};
+  h += mvCard('Идентификация · Identity',
+        mvRow('Название', v.name_current)
+      + mvRow('IMO', v.imo)
+      + mvRow('Флаг', v.flag_current)
+      + mvRow('Тип', v.vessel_type)
+      + mvRow('Подтип', v.vessel_subtype)
+      + mvRow('Статус', v.status)
+      + mvRow('Год постройки', v.built_year));
+  h += mvCard('Характеристики · Particulars',
+        mvRow('Валовая вместимость (GT)', v.gross_tonnage)
+      + mvRow('Дедвейт (DWT)', v.dwt)
+      + mvRow('Верфь — страна', v.builder_origin)
+      + mvRow('Верфь', v.builder_yard)
+      + mvRow('Класс. общество', v.class_society));
+  h += mvCard('Управление · Management',
+        mvRow('Владелец', joinNC(v.current_owner_name, v.current_owner_country) || v.owner_company)
+      + mvRow('Коммерч. менеджер', joinNC(v.current_commercial_manager_name, v.current_commercial_manager_country))
+      + mvRow('Техн. менеджер', joinNC(v.current_technical_manager_name, v.current_technical_manager_country))
+      + mvRow('Оператор', v.operator_company));
+
+  var ra = v.rating_access || {};
+  if(ra.unlocked && v.skipi_technical_index!=null){
+    h += mvCard('Оценка Skipi · Assessment',
+          mvRow('Technical index', v.skipi_technical_index)
+        + mvRow('Comfort score', v.skipi_comfort_score)
+        + mvRow('Operational risk', v.skipi_operational_risk)
+        + mvRow('Commercial reliability', v.skipi_commercial_reliability)
+        + mvRow('Safety culture', v.skipi_safety_culture)
+        + mvRow('Confidence', v.skipi_score_confidence));
+  } else {
+    h += mvCard('Оценка Skipi · Assessment',
+          '<div class="set-pill">Оценки скрыты</div>'
+        + '<div class="set-hint" style="margin-top:8px">Скоринг Skipi (technical / comfort / risk / reliability / safety) открывается для аккаунтов Seafarer / Crewing или по лицензии на данные. On&nbsp;Board показывает фактические данные судна.</div>');
+  }
+
+  var nr = v.review_count||0, nf=(v.facts||[]).length, ne=(v.events||[]).length, ns=(v.sanctions||[]).length;
+  h += mvCard('Записи · Records',
+        mvRow('Отзывы (сигналы)', nr)
+      + mvRow('Факты', nf)
+      + mvRow('События', ne)
+      + mvRow('Санкции', ns));
+
+  h += '<div class="apps-note" style="margin-top:16px"><b>Только чтение</b> — данные судна берутся из базы данных Skipi. '
+     + 'Возможность редактировать карточку судна появится позже.</div>';
+  return h + '</div>';
+}
+
 // --- section renderers (live vs honest shell) ---
 function renderCrewConnectionCard(){
   var c=crewConfig(); var missing=crewConfigMissing();
@@ -947,23 +1330,39 @@ function settingsRow(label, desc, control){
 function renderSettingsNav(){
   var tab = settingsState.tab || 'vessel';
   var items = [
-    ['vessel','▣','Судно'],
+    ['vessel','▣','Моё судно'],
     ['crew','☷','Экипаж'],
+    ['devices','⌁','Сопряжённые устройства'],
     ['connection','⚙','Подключение'],
     ['workflow','⇄','Workflow'],
     ['security','◇','Security'],
-    ['about','ⓘ','About']
+    ['about','ⓘ','Приложение']
   ];
-  var h = '<div class="settings-nav-title">Settings</div>';
+  var h = '<div class="settings-sidebar-head">'
+    + '<div class="settings-traffic" aria-hidden="true"><span></span><span></span><span></span></div>'
+    + '<h2>Настройки</h2>'
+    + '<p>Skipi On Board · судовое рабочее пространство</p>'
+    + '</div><div class="settings-nav-list">';
   for(var i=0;i<items.length;i++){
     var it=items[i];
-    h += '<div class="settings-nav-item'+(tab===it[0]?' active':'')+'" data-qa="onboard-settings-'+it[0]+'" onclick="settingsSetTab(\''+it[0]+'\')">'
-      + '<span class="nav-icon">'+it[1]+'</span><span>'+it[2]+'</span></div>';
+    h += '<button class="settings-nav-item'+(tab===it[0]?' active':'')+'" type="button" data-qa="onboard-settings-'+it[0]+'" onclick="settingsSetTab(\''+it[0]+'\')">'
+      + '<span class="nav-icon">'+it[1]+'</span><span class="nav-label">'+it[2]+'</span></button>';
   }
+  h += '</div>';
   var nav=document.getElementById('settings-nav'); if(nav) nav.innerHTML=h;
 }
 function settingsTitle(title, desc){
   return '<div class="settings-section"><h3 id="settings-title">'+esc(title)+'</h3><div class="section-desc">'+desc+'</div>';
+}
+function renderPairedDevicesSettings(){
+  var node = onboardNodeId();
+  var h = '<div class="set-sec" data-qa="onboard-settings-devices-panel"><div class="set-sec-title">Device pairing · Сопряжённые устройства</div><div class="set-card">';
+  h += settingsRow('Текущее устройство', 'Этот desktop-экран Skipi On Board. Локальный node id хранится только в приложении.', '<span class="set-pill">'+esc(node)+'</span>');
+  h += settingsRow('Список устройств', 'Реальный список появится после подключения общего device-pairing API. Сейчас On Board не делает вызовов к pairing backend и не показывает фейковые пары.', '<span class="set-pill warn" data-qa="paired-devices-empty">not connected</span>');
+  h += settingsRow('Показать код / QR', 'Общий flow остаётся тем же, что у семейства Skipi: код/QR для переноса сессии живёт в разделе «Сопряжённые устройства». В этой desktop shell он ещё не подключён.', '<button class="btn btn-outline btn-sm" type="button" disabled>Недоступно</button>');
+  h += settingsRow('Отзыв устройства', 'Кнопки revoke появятся только вместе с реальным списком устройств. Crew invite и device pairing остаются разными потоками.', '<button class="btn btn-outline btn-sm" type="button" disabled>Нет устройств</button>');
+  h += '</div><div class="apps-safety" style="margin-top:16px"><b>Boundary:</b> это вкладка общего Settings Standard. Она не переделывает crew linking, не создаёт paired-device записи и не вызывает backend.</div></div>';
+  return h;
 }
 function renderSettings(){
   renderSettingsNav();
@@ -976,19 +1375,18 @@ function renderSettings(){
   var h = '<div class="set-screen">';
 
   if(tab==='vessel'){
-    h += settingsTitle('Судно', 'Текущий vessel context. Это рабочее судовое пространство On Board, а не personal vault моряка.');
-    h += '<div>';
-    h += settingsRow('Vessel', esc(cc.vessel_name || '— не задано'), '<span class="set-pill">'+esc(cc.vessel_mode || 'local')+'</span>');
-    h += settingsRow('IMO', esc(cc.vessel_imo || '— не задано'), '');
-    h += settingsRow('Node', esc(node), '');
-    h += settingsRow('Connection', esc(conn), '');
-    h += settingsRow('Version', 'Skipi On Board v'+esc(APP_VERSION), '');
-    h += '</div></div>';
+    h += settingsTitle('Моё судно', 'Выберите судно из базы данных Skipi по IMO. Это рабочее судовое пространство On Board, а не personal vault моряка. Данные судна только для чтения — редактирование появится позже.');
+    h += '</div>';
+    h += renderMyVesselSettings();
   } else if(tab==='crew'){
     h += settingsTitle('Экипаж', 'Crew membership controls stay separate from device pairing. Моряк принимает приглашение в Seafarer сам.');
     h += '</div>';
     h += renderCrewRosterSection();
     h += renderCrewInviteSection();
+  } else if(tab==='devices'){
+    h += settingsTitle('Сопряжённые устройства', 'Общий раздел Skipi для переноса сессии и управления доверенными устройствами. В On Board пока показан честный неподключённый shell.');
+    h += '</div>';
+    h += renderPairedDevicesSettings();
   } else if(tab==='connection'){
     h += settingsTitle('Подключение', 'API/server connection readiness for the crew membership backend. No fake roster rows or fake codes.');
     h += '</div>';
@@ -1022,7 +1420,7 @@ function renderSettings(){
     h += '<div>';
     h += settingsRow('Application', 'Skipi On Board', '');
     h += settingsRow('Version', 'v'+esc(APP_VERSION), '');
-    h += settingsRow('UI family', 'Desktop navigation and settings inherit Skipi Seafarer pattern: compact module tabs, vessel chip, gear, two-panel settings modal.', '');
+    h += settingsRow('UI family', 'Settings inherit the shared Skipi desktop Settings Standard: Obsidian-like two-panel modal, #004564 accent, visible paired-devices section, product-specific vessel/workflow sections.', '');
     h += settingsRow('Status', 'Local honest UI shell. No build/release/backend work in this pass.', '<span class="set-pill warn">review</span>');
     h += '</div></div>';
   }
@@ -1271,7 +1669,7 @@ function pluginTileHtml(id){
             : st==='disabled'  ? '<span class="apps-badge disabled">Disabled</span>'
             :                    '<span class="apps-badge avail">Available</span>';
   var devTag = m.dev_only ? ' <span class="apps-badge disabled">dev</span>' : '';
-  return '<button class="apps-tile" type="button" onclick="appsSelect(\''+id+'\')">'
+  return '<button class="apps-tile" type="button" data-qa="plugin-settings-'+esc(id)+'" onclick="appsSelect(\''+id+'\')">'
     + '<span class="apps-tile-icon">'+(m.icon||'🧩')+'</span>'
     + '<span class="apps-tile-body"><span class="apps-tile-name">'+esc(m.name||id)+devTag+'</span>'
     + '<span class="apps-tile-sub">'+esc(m.short||'')+'</span>'+badge+'</span></button>';
@@ -1281,6 +1679,9 @@ function pluginPermsHtml(m){
   var caps = m.capabilities || {}; var perms = m.permissions || [];
   var rows = [
     ['Local storage (sandboxed)', perms.indexOf('local_storage')>=0],
+    ['Vessel context (imo / name)', perms.indexOf('vessel.context')>=0],
+    ['Reports inbox — read (host-mediated)', perms.indexOf('inbox.read')>=0],
+    ['Reports inbox — manage status (host-mediated)', perms.indexOf('inbox.manage')>=0],
     ['Network', !!(caps.network && caps.network!=='none')],
     ['Documents', !!(caps.documents && caps.documents!=='none')],
     ['Account', !!(caps.account && caps.account!=='none')],
@@ -1318,7 +1719,9 @@ function pluginDetailHtml(id){
   h += pluginPermsHtml(m);
   h += '<div class="apps-note"><b>Sandbox</b> — this plugin runs in an isolated container with a narrow host API '
      + '(theme, its own scoped storage, navigation). It has <b>no access</b> to crew links, vessel documents, '
-     + 'certificates, pairing secrets or the network. QR pairing is a trust bootstrap, not a plugin authorization layer.</div>';
+     + 'certificates or pairing secrets. Any vessel context or reports-inbox access is host-mediated and appears '
+     + '<b>only</b> when this plugin\'s manifest declares the matching permission — the vessel access token is '
+     + 'never exposed to the plugin. QR pairing is a trust bootstrap, not a plugin authorization layer.</div>';
   if(m.safety && m.safety.requires_disclaimer){
     h += '<div class="apps-safety"><b>Disclaimer</b> — '+esc(m.safety.disclaimer||'This plugin is not certified equipment.')+'</div>';
   }
@@ -1398,8 +1801,127 @@ function pluginClose(){
   renderApps();
 }
 
+// =========================================================================
+// Receiver host bridge (ship-photo-collection inbox) — host-mediated access to
+// the work-completion photo reports backend, which already exists:
+//   GET   /api/reports?imo=...        (the inbox)
+//   GET   /api/reports/{id}           (report + photos[])
+//   PATCH /api/reports/{id}/status    (received | reviewed | archived)
+//   photos served static under /media/reports/...
+//
+// Guardrails (non-negotiable):
+//  - The ONBOARD_TOKEN never leaves host scope. The bearer is injected here;
+//    it is never placed in any object handed back to a plugin.
+//  - imo is FORCED from crewConfig().vessel_imo on every call, so a plugin
+//    cannot read or mutate another vessel's reports.
+//  - Same dormant gating as crew: nothing happens unless crewBackendOn()
+//    (committed CREW_API_CONNECTED, or a dev-mode override) AND a full config
+//    (api_base + onboard_token + vessel_imo) is present — otherwise the plugin
+//    gets an honest state, never fake reports/photos.
+//  - Each surface needs an explicit manifest permission:
+//      vessel.context -> vessel.getContext()
+//      inbox.read     -> inbox.list / inbox.get / inbox.photoUrl
+//      inbox.manage   -> inbox.setStatus
+// =========================================================================
+var INBOX_FORWARD_STATUSES = ['received','reviewed','archived']; // office never reverts to "submitted"
+
+function inboxApiBase(){ return String(crewConfig().api_base||'').replace(/\/+$/,''); }
+function pluginHasPerm(pluginId, perm){
+  var p = SkipiPlugins[pluginId]; var perms = (p && p.manifest && p.manifest.permissions) || [];
+  return perms.indexOf(perm) >= 0;
+}
+// Shared precondition for every inbox call: an honest-state string, or null when
+// it is safe to hit the live backend.
+function inboxGateState(){
+  if(!crewBackendOn()) return 'backend_off';   // dormant: flag off & no dev override
+  if(!crewConfigReady()) return 'no_config';   // missing api_base / token / vessel_imo
+  return null;
+}
+// Host-internal fetch. Reads the bearer from crewConfig, injects it, and
+// normalizes the response into an envelope so callers can map honest states.
+// The token is used here only — it is never returned.
+function hostReportsFetch(method, path, body){
+  var c = crewConfig();
+  var opt = { method:method, headers:{ 'Authorization':'Bearer '+(c.onboard_token||'') } };
+  if(body!=null){ opt.headers['Content-Type']='application/json'; opt.body=JSON.stringify(body); }
+  return fetch(inboxApiBase()+path, opt).then(function(r){
+    if(r.status===401 || r.status===403) return { ok:false, status:r.status, state:'unauthorized' };
+    if(r.status===404) return { ok:false, status:404, state:'not_found' };
+    if(!r.ok) return r.text().then(function(t){ return { ok:false, status:r.status, state:'unavailable', message:'HTTP '+r.status+(t?(' '+t.slice(0,120)):'') }; });
+    if(r.status===204) return { ok:true, status:204, data:null };
+    return r.json().then(function(j){ return { ok:true, status:r.status, data:j }; });
+  }).catch(function(e){ return { ok:false, status:0, state:'unavailable', message:''+e }; });
+}
+// Only /media/... paths are absolutized/handed out — never an API path, so a
+// plugin cannot coax the host into building an authenticated-looking URL.
+function inboxMediaUrl(u){
+  if(!u) return null;
+  u = String(u);
+  if(/^https?:\/\//i.test(u)) return u;
+  if(u.charAt(0)!=='/') u = '/'+u;
+  if(u.indexOf('/media/')!==0) return null;
+  return inboxApiBase()+u;
+}
+function inboxAbsolutizeReport(rep){
+  if(!rep || typeof rep!=='object') return rep;
+  if(rep.thumbnail_url){ var t=inboxMediaUrl(rep.thumbnail_url); if(t) rep.thumbnail_url=t; }
+  if(Array.isArray(rep.photos)) rep.photos.forEach(function(p){ if(p && p.storage_url){ var u=inboxMediaUrl(p.storage_url); if(u) p.storage_url=u; } });
+  return rep;
+}
+function inboxResolve(v){ return Promise.resolve(v); }
+
+function hostInboxList(pluginId, opts){
+  if(!pluginHasPerm(pluginId,'inbox.read')) return inboxResolve({ ok:false, state:'permission_denied', permission:'inbox.read' });
+  var gate = inboxGateState(); if(gate) return inboxResolve({ ok:false, state:gate });
+  opts = opts || {};
+  var c = crewConfig();
+  var qs = 'imo='+encodeURIComponent(c.vessel_imo); // FORCED — plugin cannot target another vessel
+  if(opts.status) qs += '&status='+encodeURIComponent(opts.status);
+  if(opts.q) qs += '&q='+encodeURIComponent(opts.q);
+  var limit = Math.min(Math.max(parseInt(opts.limit,10)||50,1),200);
+  var offset = Math.max(parseInt(opts.offset,10)||0,0);
+  qs += '&limit='+limit+'&offset='+offset;
+  return hostReportsFetch('GET','/api/reports?'+qs, null).then(function(r){
+    if(!r.ok) return { ok:false, state:r.state||'unavailable', message:r.message };
+    var d = r.data || {}; var items = (d.items||[]).map(inboxAbsolutizeReport);
+    return { ok:true, state: items.length ? 'ok' : 'empty', items:items,
+             total: (d.total!=null?d.total:items.length), limit:(d.limit||limit), offset:(d.offset||offset) };
+  });
+}
+function hostInboxGet(pluginId, id){
+  if(!pluginHasPerm(pluginId,'inbox.read')) return inboxResolve({ ok:false, state:'permission_denied', permission:'inbox.read' });
+  var gate = inboxGateState(); if(gate) return inboxResolve({ ok:false, state:gate });
+  if(!id) return inboxResolve({ ok:false, state:'bad_request', message:'missing report id' });
+  return hostReportsFetch('GET','/api/reports/'+encodeURIComponent(id), null).then(function(r){
+    if(!r.ok) return { ok:false, state:r.state||'unavailable', message:r.message };
+    var rep = r.data || {};
+    // defense in depth: get() is not imo-filtered server-side, so reject a
+    // report that does not belong to the configured vessel.
+    var imo = crewConfig().vessel_imo;
+    if(rep.imo!=null && String(rep.imo)!==String(imo)) return { ok:false, state:'forbidden_vessel' };
+    return { ok:true, state:'ok', report: inboxAbsolutizeReport(rep) };
+  });
+}
+function hostInboxSetStatus(pluginId, id, status){
+  if(!pluginHasPerm(pluginId,'inbox.manage')) return inboxResolve({ ok:false, state:'permission_denied', permission:'inbox.manage' });
+  var gate = inboxGateState(); if(gate) return inboxResolve({ ok:false, state:gate });
+  if(!id) return inboxResolve({ ok:false, state:'bad_request', message:'missing report id' });
+  if(INBOX_FORWARD_STATUSES.indexOf(status)<0) return inboxResolve({ ok:false, state:'bad_request', message:'invalid status (allowed: '+INBOX_FORWARD_STATUSES.join(', ')+')' });
+  return hostReportsFetch('PATCH','/api/reports/'+encodeURIComponent(id)+'/status', { status:status }).then(function(r){
+    if(!r.ok) return { ok:false, state:r.state||'unavailable', message:r.message };
+    return { ok:true, state:'ok', report: inboxAbsolutizeReport(r.data||{}) };
+  });
+}
+function hostInboxPhotoUrl(pluginId, photo){
+  if(!pluginHasPerm(pluginId,'inbox.read')) return null;
+  var u = (photo && typeof photo==='object') ? (photo.storage_url || photo.thumbnail_url || photo.url) : photo;
+  return inboxMediaUrl(u);
+}
+
 // Narrow host API handed to a mounted plugin. Storage is namespaced per plugin
-// so a plugin cannot read host/crew/pairing keys. No crew/vessel-doc/pairing API.
+// so a plugin cannot read host/crew/pairing keys. The receiver surfaces
+// (vessel/inbox) appear ONLY when the manifest declares the matching permission
+// and are host-mediated: the ONBOARD_TOKEN is never handed to the plugin.
 function makeHostApi(pluginId){
   var ns = 'skipi-plugin:'+pluginId+':';
   var subs = [];
@@ -1417,6 +1939,29 @@ function makeHostApi(pluginId){
     navigation: {
       closePlugin: function(){ pluginClose(); },
       setTitle: function(t){ var el=document.getElementById('plugin-title'); if(el) el.textContent = String(t); }
+    },
+    // Vessel context — only with the vessel.context permission. No token, no
+    // crew roster, no documents; just which vessel this On Board represents.
+    vessel: {
+      getContext: function(){
+        if(!pluginHasPerm(pluginId,'vessel.context')) return { ok:false, state:'permission_denied', permission:'vessel.context' };
+        var c = crewConfig();
+        return { ok:true, state:'ok',
+                 vessel_imo: c.vessel_imo || null,
+                 vessel_name: c.vessel_name || null,
+                 configured: crewConfigReady(),
+                 live: crewLive() };
+      }
+    },
+    // Receiver inbox — host-mediated reports access (see bridge above). Every
+    // method resolves to an envelope { ok, state, ... }; honest states:
+    // permission_denied | backend_off | no_config | unauthorized | unavailable
+    // | not_found | forbidden_vessel | bad_request | empty | ok.
+    inbox: {
+      list:      function(opts){ return hostInboxList(pluginId, opts); },
+      get:       function(id){ return hostInboxGet(pluginId, id); },
+      setStatus: function(id, status){ return hostInboxSetStatus(pluginId, id, status); },
+      photoUrl:  function(photo){ return hostInboxPhotoUrl(pluginId, photo); }
     },
     permissions: { listGranted: function(){ var p=SkipiPlugins[pluginId]; return (p&&p.manifest&&p.manifest.permissions)||[]; } }
   };
@@ -1443,10 +1988,14 @@ function verTagClick(){
 }
 
 // ---------- boot ----------
-updateVerTag();
-(function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
-loadBundledPlugins();
-showLaunch('choice');
+// Guarded so a headless harness can load the shipped host code (makeHostApi,
+// inbox bridge, crew config) without a DOM. Never set in production.
+if(!(typeof window!=='undefined' && window.__ONBOARD_NO_BOOT__)){
+  updateVerTag();
+  (function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
+  loadBundledPlugins();
+  showLaunch('choice');
+}
 </script>
 </body>
 </html>
