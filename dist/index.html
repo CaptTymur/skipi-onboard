@@ -152,6 +152,11 @@
   .pair-payload { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px;
     font-size:11.5px; line-height:1.45; color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace;
     white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto; margin:0; }
+  .pair-code-card { margin:14px 0; border:1px solid var(--border); border-radius:12px; background:var(--surface); padding:14px; }
+  .pair-code-label { color:var(--text2); font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; margin-bottom:7px; }
+  .pair-code-value { color:var(--text); font:900 24px/1.15 ui-monospace,Menlo,Consolas,monospace; letter-spacing:.08em; word-break:break-all; }
+  .pair-code-help { color:var(--text2); font-size:12px; line-height:1.45; margin-top:7px; }
+  .pair-code-warn { border-color:rgba(226,185,61,.45); background:rgba(226,185,61,.08); }
   @media (max-width:780px){ .pair-grid { grid-template-columns:1fr; } }
 
   /* ---- crew module ---- */
@@ -960,6 +965,7 @@ function crewRequestInvite(){
     .catch(function(e){ crewState.invite=null; crewState.inviteErr=''+e; crewState.inviteLoading=false; stopCrewInviteTimer(); renderSettings(); });
 }
 function crewInvitePayload(){ var inv=crewState.invite; if(!inv) return ''; return inv.qr_payload || ('skipi-crew:1:onboard:'+(inv.code||'')); }
+function crewInviteManualCode(){ var inv=crewState.invite; if(!inv) return ''; return inv.code || crewInvitePayload(); }
 function startCrewInviteTimer(){ stopCrewInviteTimer(); updateCrewCountdown(); crewState.timer=setInterval(updateCrewCountdown,1000); }
 function stopCrewInviteTimer(){ if(crewState.timer){ clearInterval(crewState.timer); crewState.timer=null; } }
 function updateCrewCountdown(){
@@ -969,7 +975,7 @@ function updateCrewCountdown(){
   if(ms<=0){ el.innerHTML='<span class="pair-expired">Код истёк — обновите</span>'; stopCrewInviteTimer(); return; }
   var t=Math.floor(ms/1000), m=Math.floor(t/60), s=t%60; el.textContent='Истекает через '+m+':'+('0'+s).slice(-2);
 }
-function copyCrewCode(){ var inv=crewState.invite; if(inv) copyText(inv.code || crewInvitePayload()); }
+function copyCrewCode(){ var inv=crewState.invite; if(inv) copyText(crewInviteManualCode()); }
 
 // --- live roster ---
 function crewLoadRoster(){
@@ -1296,7 +1302,7 @@ function renderCrewInviteSection(){
       var payload=crewInvitePayload(); var durl=qrDataUrl(payload);
       h+= durl ? '<img class="pair-qr-img" alt="Crew invite QR" src="'+durl+'">' : '<div class="set-qr-ph">QR недоступен</div>';
       h+='<div class="pair-countdown" id="crew-countdown"></div>';
-      h+='<div class="set-hint" style="margin-top:8px">Ручной код:</div><div class="set-mono">'+esc(crewState.invite.code||payload)+'</div>';
+      h+='<div class="set-hint" style="margin-top:8px">Ручной код:</div><div class="set-mono">'+esc(crewInviteManualCode())+'</div>';
       h+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" type="button" onclick="crewRequestInvite()">Обновить код</button>'
         +'<button class="btn btn-outline" type="button" onclick="copyCrewCode()">Копировать</button></div>';
     }
@@ -1491,14 +1497,84 @@ function qrDataUrl(text){
 function openPairing(){
   currentModule = 'crew';
   setActiveTab('crew');
+  stopPairingTimer();
+  stopCrewInviteTimer();
+  if(crewLive()){
+    crewPairingRequestInvite();
+    return;
+  }
   pairing.invite = buildInvite();
   renderPairing();
 }
 function regenerateInvite(){
+  if(crewLive()){
+    crewPairingRequestInvite();
+    return;
+  }
   pairing.invite = buildInvite();
   renderPairing();
 }
-function closePairing(){ renderCrew(); }
+function closePairing(){ stopPairingTimer(); stopCrewInviteTimer(); renderCrew(); }
+
+function crewPairingRequestInvite(){
+  crewState.inviteLoading=true; crewState.inviteErr=null; crewState.invite=null;
+  renderCrewLivePairing();
+  crewFetch('POST', '/api/onboard/crew/invite', { vessel_imo: crewConfig().vessel_imo })
+    .then(function(res){ crewState.invite=res||{}; crewState.inviteLoading=false; renderCrewLivePairing(); startCrewInviteTimer(); })
+    .catch(function(e){ crewState.invite=null; crewState.inviteErr=''+e; crewState.inviteLoading=false; stopCrewInviteTimer(); renderCrewLivePairing(); });
+}
+
+function copyCrewPairingCode(){ copyCrewCode(); }
+
+function renderCrewLivePairing(){
+  var content = document.getElementById('scr-content');
+  if(!content) return;
+  var c = crewConfig();
+  var inv = crewState.invite;
+  var h = '<div class="apps-screen pair-screen" data-qa="onboard-crew-live-invite">';
+  h += '<button class="apps-back" type="button" onclick="closePairing()">← Crew</button>';
+  h += '<div class="apps-head"><div class="apps-head-title">Invite a crew member</div>'
+     + '<div class="apps-head-sub">Show this QR or manual code to the seafarer. In Skipi Seafarer they open <b>My Vessel</b>, scan QR or enter the code, then confirm the crew link.</div></div>';
+
+  if(crewState.inviteLoading){
+    h += '<div class="set-card"><div class="set-hint">Запрашиваю QR/код экипажа…</div></div>';
+  } else if(crewState.inviteErr){
+    h += '<div class="set-card"><div class="set-pill warn">Не удалось получить код</div>'
+      + '<div class="set-hint" style="margin-top:8px">'+esc(crewState.inviteErr)+'</div>'
+      + '<button class="btn btn-accent" type="button" style="margin-top:12px" onclick="crewPairingRequestInvite()">Повторить</button></div>';
+  } else if(inv && (inv.code || inv.qr_payload)){
+    var payload = crewInvitePayload();
+    var manual = crewInviteManualCode();
+    var durl = qrDataUrl(payload);
+    var qrHtml = durl
+      ? '<img class="pair-qr-img" data-qa="onboard-crew-invite-qr" alt="Crew invite QR" src="'+durl+'">'
+      : '<div class="pair-qr-missing" data-qa="onboard-crew-invite-qr-missing">QR encoder failed to load. Use the manual code.</div>';
+    h += '<div class="pair-grid">';
+    h += '<div class="pair-qr-card">' + qrHtml
+       + '<div class="pair-countdown" id="crew-countdown"></div>'
+       + '<button class="btn btn-accent" type="button" onclick="crewPairingRequestInvite()">↻ Обновить QR/код</button>'
+       + '</div>';
+    h += '<div class="pair-side">';
+    h += '<div class="pair-code-card" data-qa="onboard-crew-manual-code">'
+       + '<div class="pair-code-label">Ручной код</div>'
+       + '<div class="pair-code-value">'+esc(manual)+'</div>'
+       + '<div class="pair-code-help">Если QR не сканируется, моряк вводит этот код в Skipi Seafarer → My Vessel → «Ввести код».</div>'
+       + '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="copyCrewPairingCode()">Копировать код</button>'
+       + '</div>';
+    h += '<div class="pair-meta"><span class="pair-meta-k">Судно</span><span class="pair-meta-v">'+esc(c.vessel_name||('IMO '+c.vessel_imo))+'</span></div>';
+    h += '<div class="pair-meta"><span class="pair-meta-k">IMO</span><span class="pair-meta-v">'+esc(c.vessel_imo||'—')+'</span></div>';
+    if(inv.expires_at) h += '<div class="pair-meta"><span class="pair-meta-k">TTL</span><span class="pair-meta-v">'+esc(String(inv.expires_at))+'</span></div>';
+    h += '<div class="apps-note"><b>Privacy</b> — this invite links crew membership only. It does not give On&nbsp;Board access to the seafarer’s full personal vault.</div>';
+    h += '</div></div>';
+  } else {
+    h += '<div class="set-card"><button class="btn btn-accent" type="button" onclick="crewPairingRequestInvite()">Показать QR/код</button>'
+      + '<div class="set-hint" style="margin-top:10px">Моряк сканирует QR или вводит ручной код в Skipi Seafarer.</div></div>';
+  }
+
+  h += '</div>';
+  content.innerHTML = h;
+  var main = document.querySelector('main'); if(main) main.scrollTop = 0;
+}
 
 function renderPairing(){
   var content = document.getElementById('scr-content');
@@ -1511,7 +1587,7 @@ function renderPairing(){
     ? '<img class="pair-qr-img" alt="Vessel invite QR" src="'+durl+'">'
     : '<div class="pair-qr-missing">QR encoder failed to load. Use the payload preview below.</div>';
 
-  var h = '<div class="apps-screen pair-screen">';
+  var h = '<div class="apps-screen pair-screen" data-qa="onboard-local-pairing-preview">';
   h += '<button class="apps-back" type="button" onclick="closePairing()">← Crew</button>';
   h += '<div class="apps-head"><div class="apps-head-title">Invite a crew member</div>'
      + '<div class="apps-head-sub">Crew open <b>Skipi Seafarer</b> and scan this code to join this vessel’s On&nbsp;Board workspace. '
@@ -1525,6 +1601,10 @@ function renderPairing(){
      + '</div>';
   // right — metadata, scopes, privacy, payload preview
   h += '<div class="pair-side">';
+  h += '<div class="pair-code-card pair-code-warn" data-qa="onboard-local-pairing-no-code">'
+     + '<div class="pair-code-label">Ручной код</div>'
+     + '<div class="pair-code-help">Этот экран сейчас показывает local QR preview. Ручной crew-code для Skipi Seafarer появляется только в live invite: включите crew backend/config (API base, ONBOARD_TOKEN, vessel IMO) и снова нажмите Invite crew member.</div>'
+     + '</div>';
   h += '<div class="pair-meta"><span class="pair-meta-k">Node</span><span class="pair-meta-v">'+esc(inv.node_id)+'</span></div>';
   h += '<div class="pair-meta"><span class="pair-meta-k">Invite</span><span class="pair-meta-v">'+esc(inv.invite_id)+'</span></div>';
   h += '<div class="pair-scopes"><div class="pair-scopes-t">Allowed scopes</div>';
