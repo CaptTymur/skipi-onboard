@@ -1725,9 +1725,147 @@ var BUNDLED_PLUGIN_DIRS = {
   'onboard-host-check': './plugins/onboard-host-check',
   'ship-photo-collection': './plugins/ship-photo-collection'
 };
-var activePlugin = null;   // { id, instance } while a plugin is mounted
-var pluginCssEl = null;    // injected <style>/<link> for the active plugin's stylesheet
-var pluginIntegrity = {};  // id -> { ok:bool, cssText:string, reason:string }
+var activePlugin = null;   // { id } while a plugin is mounted (frame-isolated)
+var pluginCssEl = null;    // (legacy) host-injected stylesheet — unused under isolation
+var pluginIntegrity = {};  // id -> { ok:bool, cssText, jsText, reason }
+
+// =========================================================================
+// SkipiOnboardPluginRuntime — ISOLATED bundled-plugin runtime + postMessage bridge.
+// Ports the Seafarer sandbox model to On Board: the verified plugin bytes run
+// inside a sandboxed iframe (sandbox="allow-scripts", NO allow-same-origin ->
+// opaque origin, cross-origin to the host) that carries its OWN strict CSP
+// (default-src 'none'; connect-src 'none'; img-src data:). The plugin therefore
+// has NO host DOM, NO host localStorage/onboard_token, NO global config and NO
+// network. The host API is reachable ONLY through a per-mount, token-gated bridge
+// that dispatches to makeHostApi(slug) on the host side (which already enforces
+// plugin permissions). The host document CSP is unchanged; strictness lives in
+// the frame. No host-side plugin code execution.
+// =========================================================================
+(function(){
+  'use strict';
+  // ---- code that runs INSIDE the isolated frame (injected via nonce'd inline) ----
+  var SHIM_SRC = `
+(function(){
+  'use strict';
+  var TOKEN = window.__SKIPI_TOKEN__ || '';
+  var slug=null, theme='light', nonce='', perms=[], ctx=null, hostMeta=null, role=null, themeSubs=[], pending={}, seq=0;
+  function send(m){ try{ parent.postMessage(Object.assign({ch:'skipi-plugin',v:1,token:TOKEN}, m),'*'); }catch(e){} }
+  function selfCheck(){
+    var r={ parentDomAccess:false, storageBlocked:true };
+    try{ if(window.parent && window.parent.document) r.parentDomAccess=true; }catch(e){ r.parentDomAccess=false; }
+    try{ window.localStorage.getItem('x'); r.storageBlocked=false; }catch(e){ r.storageBlocked=true; }
+    return r;
+  }
+  function injectStyle(css){ var s=document.createElement('style'); s.nonce=nonce; s.textContent=css||''; document.head.appendChild(s); }
+  function injectScript(js){ var s=document.createElement('script'); s.nonce=nonce; s.textContent=js; document.head.appendChild(s); }
+  function call(ns, method, args){ return new Promise(function(res){ var id=++seq; pending[id]=res; send({type:'api.call', id:id, ns:ns, method:method, args:args||[]}); }); }
+  function has(p){ return perms.indexOf(p)>=0; }
+  function proxy(){
+    return {
+      host: hostMeta, role: role,
+      theme: { get:function(){ return theme; }, subscribe:function(cb){ if(typeof cb==='function') themeSubs.push(cb); return function(){ themeSubs=themeSubs.filter(function(f){return f!==cb;}); }; } },
+      permissions: { listGranted:function(){ return perms.slice(); } },
+      vessel: { getContext:function(){ return ctx; } },
+      storage: {
+        get:function(k, cb){ if(!has('local_storage')){ if(cb) cb(null); return Promise.resolve(null); } var p=call('storage','get',[k]); if(cb) p.then(cb); return p; },
+        set:function(k,v){ if(has('local_storage')) call('storage','set',[k,v]); },
+        remove:function(k){ if(has('local_storage')) call('storage','remove',[k]); }
+      },
+      navigation: { setTitle:function(t){ call('navigation','setTitle',[t]); }, closePlugin:function(){ call('navigation','closePlugin',[]); } },
+      audio: { playLoop:function(){}, stop:function(){} },
+      inbox: {
+        list:function(o){ return call('inbox','list',[o]); },
+        get:function(id){ return call('inbox','get',[id]); },
+        setStatus:function(id,s){ return call('inbox','setStatus',[id,s]); },
+        photoUrl:function(){ return ''; }
+      }
+    };
+  }
+  window.addEventListener('message', function(ev){
+    var m=ev.data; if(!m || m.ch!=='skipi-plugin' || m.token!==TOKEN) return;
+    if(m.type==='init'){
+      slug=m.slug; theme=m.theme||'light'; nonce=m.nonce||''; perms=m.permissions||[]; ctx=m.context||null; hostMeta=m.host||null; role=m.role||null;
+      var sc=selfCheck(), fetchProbe;
+      try{ fetchProbe=Promise.race([ fetch('https://blocked.invalid/probe').then(function(){return false;},function(){return true;}), new Promise(function(r){ setTimeout(function(){ r(true); }, 500); }) ]); }
+      catch(e){ fetchProbe=Promise.resolve(true); }
+      fetchProbe.then(function(blocked){
+        sc.fetchBlocked=blocked;
+        try{ injectStyle(m.css); injectScript(m.js); }catch(e){ send({type:'error',message:'inject: '+e.message}); return; }
+        var reg=window.SkipiPlugins && window.SkipiPlugins[slug];
+        if(!reg || typeof reg.mount!=='function'){ send({type:'error',message:'plugin did not register (CSP block?)'}); return; }
+        try{ reg.mount(document.body, proxy()); }catch(e){ send({type:'error',message:'mount: '+e.message}); return; }
+        send({type:'mounted', height:document.body.scrollHeight, selfcheck:sc});
+        try{ var ro=new ResizeObserver(function(){ send({type:'resize', height:document.body.scrollHeight}); }); ro.observe(document.body); }catch(e){}
+      });
+    } else if(m.type==='theme'){ theme=m.theme; themeSubs.forEach(function(cb){ try{ cb(theme); }catch(e){} }); send({type:'resize',height:document.body.scrollHeight}); }
+    else if(m.type==='api.result'){ var cb=pending[m.id]; if(cb){ delete pending[m.id]; cb(m.error?null:m.value); } }
+    else if(m.type==='unmount'){ var reg2=window.SkipiPlugins && window.SkipiPlugins[slug]; if(reg2 && typeof reg2.unmount==='function'){ try{ reg2.unmount(); }catch(e){} } send({type:'unmounted'}); }
+  });
+  send({type:'ready'});
+})();
+`;
+  function randNonce(){ var a=new Uint8Array(16); crypto.getRandomValues(a); var s=''; for(var i=0;i<a.length;i++) s+=('0'+a[i].toString(16)).slice(-2); return s; }
+  function buildSrcdoc(nonce, token){
+    var csp = "default-src 'none'; script-src 'nonce-"+nonce+"'; style-src 'nonce-"+nonce+"'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'";
+    var boot = 'window.__SKIPI_TOKEN__='+JSON.stringify(token)+';\n';
+    return '<!doctype html><html><head><meta charset="utf-8">'
+      + '<meta http-equiv="Content-Security-Policy" content="'+csp+'">'
+      + '<scr'+'ipt nonce="'+nonce+'">'+boot+SHIM_SRC+'</scr'+'ipt></head><body></body></html>';
+  }
+  function create(){
+    var active=null, audit=[];
+    var WL={ storage:1, navigation:1, vessel:1, inbox:1, permissions:1 };
+    function toFrame(msg){ try{ active.iframe.contentWindow.postMessage(Object.assign({ch:'skipi-plugin',v:1,token:active.token}, msg),'*'); }catch(e){} }
+    function sendInit(){
+      var api=active.hostApi;
+      toFrame({ type:'init', slug:active.slug, css:active.css, js:active.js, nonce:active.nonce,
+        theme:(api.theme&&api.theme.get&&api.theme.get())||'light',
+        permissions:(api.permissions&&api.permissions.listGranted&&api.permissions.listGranted())||[],
+        host:api.host||null, role:api.role||null,
+        context:(api.vessel&&api.vessel.getContext&&api.vessel.getContext())||null });
+    }
+    function onMessage(ev){
+      var m=ev.data; if(!active || !m || m.ch!=='skipi-plugin' || m.token!==active.token) return;
+      if(ev.source && active.iframe && ev.source!==active.iframe.contentWindow) return; // defense-in-depth: only the active frame
+      if(m.type==='ready'){ if(active.installed) sendInit(); else active.gotReady=true; return; }
+      if(m.type==='mounted'){ active.iframe.style.height=Math.max(160,m.height|0)+'px'; active.selfcheck=m.selfcheck||{}; if(active.resolve){ active.resolve({ok:true}); active.resolve=null; } return; }
+      if(m.type==='resize'){ active.iframe.style.height=Math.max(160,m.height|0)+'px'; return; }
+      if(m.type==='error'){ active.error=m.message; if(active.resolve){ active.resolve({ok:false,reason:m.message}); active.resolve=null; } return; }
+      if(m.type==='api.call'){
+        var ns=m.ns, method=m.method, args=Array.isArray(m.args)?m.args:[];
+        if(!WL[ns]){ audit.push('DENY ns '+ns); toFrame({type:'api.result',id:m.id,error:'denied_namespace'}); return; }
+        var api=active.hostApi, fn=api[ns] && api[ns][method];
+        if(typeof fn!=='function'){ audit.push('DENY '+ns+'.'+method); toFrame({type:'api.result',id:m.id,error:'denied_method'}); return; }
+        var out; try{ out=fn.apply(null,args); }catch(e){ toFrame({type:'api.result',id:m.id,error:''+e}); return; }
+        Promise.resolve(out).then(function(v){ toFrame({type:'api.result',id:m.id,value:v}); }, function(e){ toFrame({type:'api.result',id:m.id,error:''+e}); });
+        return;
+      }
+    }
+    if(typeof window!=='undefined' && window.addEventListener) window.addEventListener('message', onMessage);
+    return {
+      open:function(slug, mountEl, hostApi, bytes){
+        var nonce=randNonce(), token=randNonce();
+        var iframe=document.createElement('iframe');
+        iframe.setAttribute('sandbox','allow-scripts');   // opaque origin: no host DOM, no same-origin
+        iframe.setAttribute('referrerpolicy','no-referrer');
+        iframe.style.cssText='width:100%;border:0;height:160px;display:block';
+        iframe.srcdoc=buildSrcdoc(nonce, token);
+        active={ slug:slug, iframe:iframe, nonce:nonce, token:token, hostApi:hostApi, css:(bytes&&bytes.css)||'', js:(bytes&&bytes.js)||'', installed:true, gotReady:false, resolve:null, selfcheck:null };
+        var mounted=new Promise(function(res){ active.resolve=res; });
+        var timer=setTimeout(function(){ if(active && active.resolve){ active.resolve({ok:false,reason:'frame did not mount within timeout'}); active.resolve=null; } }, 6000);
+        mountEl.innerHTML=''; mountEl.appendChild(iframe);
+        if(active.gotReady) sendInit();
+        return mounted.then(function(r){ clearTimeout(timer); return r; });
+      },
+      pushTheme:function(t){ if(active) toFrame({type:'theme', theme:t}); },
+      close:function(){ if(!active) return; toFrame({type:'unmount'}); if(active.iframe.parentNode) active.iframe.parentNode.removeChild(active.iframe); active=null; },
+      _active:function(){ return active; },
+      _audit:function(){ return audit; }
+    };
+  }
+  window.SkipiOnboardPluginRuntime = { create: create };
+})();
+var onboardPluginRuntime = window.SkipiOnboardPluginRuntime.create();
 
 function bundledPluginIds(){ return Object.keys(BUNDLED_PLUGIN_DIRS).filter(function(id){ return !!SkipiPlugins[id]; }); }
 function isBundledPlugin(id){ return !!(BUNDLED_PLUGIN_DIRS[id] && SkipiPlugins[id]); }
@@ -1778,11 +1916,17 @@ function loadOneBundledPlugin(id){
         if(typeof console!=='undefined') console.warn('[plugin] integrity check FAILED for '+id+' — not loaded');
         return;
       }
-      pluginIntegrity[id] = { ok:true, cssText:cssText };
-      // Execute exactly the verified bytes (inline, not src) so a tampered file
-      // cannot be substituted between hashing and execution.
-      var s = document.createElement('script'); s.setAttribute('data-plugin-js', id); s.textContent = jsText;
-      document.head.appendChild(s);
+      // Keep the verified bytes — they run ONLY inside the isolated frame, never
+      // in the host document. The host registry holds the manifest from the
+      // verified plugin.json (no plugin code executes in the host).
+      pluginIntegrity[id] = { ok:true, cssText:cssText, jsText:jsText };
+      try {
+        var mani = JSON.parse(jsonText);
+        SkipiPlugins[id] = { manifest: mani };
+      } catch(e){
+        pluginIntegrity[id] = { ok:false, reason:'bad manifest json: '+e };
+        if(typeof console!=='undefined') console.warn('[plugin] bad plugin.json for '+id+': '+e);
+      }
     });
   }).catch(function(e){
     pluginIntegrity[id] = { ok:false, reason:''+e };
@@ -1811,8 +1955,16 @@ function pluginTileHtml(id){
     + '<span class="apps-tile-sub">'+esc(m.short||'')+'</span>'+badge+'</span></button>';
 }
 
+function manifestPermissions(m){
+  var out = [];
+  function addAll(list){ if(Array.isArray(list)) list.forEach(function(p){ if(out.indexOf(p)<0) out.push(p); }); }
+  addAll(m && m.permissions);
+  if(m && m.roles && m.roles.onboard) addAll(m.roles.onboard.capabilities);
+  if(out.indexOf('vessel.current.read') >= 0 && out.indexOf('vessel.context') < 0) out.push('vessel.context');
+  return out;
+}
 function pluginPermsHtml(m){
-  var caps = m.capabilities || {}; var perms = m.permissions || [];
+  var caps = m.capabilities || {}; var perms = manifestPermissions(m);
   var rows = [
     ['Local storage (sandboxed)', perms.indexOf('local_storage')>=0],
     ['Vessel context (imo / name)', perms.indexOf('vessel.context')>=0],
@@ -1883,7 +2035,10 @@ function pluginDisable(id){
 }
 function pluginOpen(id){
   var p = SkipiPlugins[id];
-  if(!p || typeof p.mount!=='function'){ showToast('Plugin unavailable'); return; }
+  var integ = pluginIntegrity[id];
+  // mount/unmount no longer live in the host — they run in the isolated frame.
+  // We only need a registered manifest + verified bytes to open it.
+  if(!p || !integ || !integ.ok){ showToast('Plugin unavailable'); return; }
   var s = pluginStore(); if(!s[id]) s[id]={installed:true};
   s[id].enabled=true; s[id].last_opened_at=new Date().toISOString(); pluginStoreSave(s);
   appsState.selectedId = id;
@@ -1905,29 +2060,33 @@ function injectPluginCss(id){
 function removePluginCss(){ if(pluginCssEl){ try { pluginCssEl.remove(); } catch(e){} pluginCssEl=null; } }
 
 function renderPluginHost(id){
-  var p = SkipiPlugins[id]; var m = p.manifest || {};
-  injectPluginCss(id);
+  var p = SkipiPlugins[id]; var m = p.manifest || {}; var integ = pluginIntegrity[id] || {};
   var h = '<div class="apps-screen plugin-host">';
   h += '<button class="apps-back" type="button" onclick="pluginClose()">← Apps</button>';
   h += '<div class="plugin-host-head"><span class="apps-tile-icon big">'+(m.icon||'🧩')+'</span>'
      + '<div><div class="apps-detail-name" id="plugin-title">'+esc(m.name||id)+'</div>'
-     + '<div class="apps-detail-cat">Plugin · v'+esc(m.version||'0')+' · sandboxed</div></div></div>';
+     + '<div class="apps-detail-cat">Plugin · v'+esc(m.version||'0')+' · isolated</div></div></div>';
   h += '<div class="plugin-mount" id="plugin-mount"></div>';
   h += '</div>';
   setContent(h);
   var container = document.getElementById('plugin-mount');
+  activePlugin = { id:id };
+  // The plugin runs inside the isolated frame; host API is the bridge proxy
+  // backed by makeHostApi(id) (permission-enforcing). No host-side plugin code.
   try {
-    activePlugin = { id:id, instance:p };
-    p.mount(container, makeHostApi(id));
+    onboardPluginRuntime.open(id, container, makeHostApi(id), { css:integ.cssText, js:integ.jsText })
+      .then(function(res){
+        if(!res || !res.ok){
+          container.innerHTML = '<div class="apps-note">Plugin failed to start'+(res&&res.reason?(': '+esc(res.reason)):'')+'</div>';
+        }
+      });
   } catch(e){
-    container.innerHTML = '<div class="apps-note">Plugin failed to mount: '+esc(''+e)+'</div>';
+    container.innerHTML = '<div class="apps-note">Plugin failed to start: '+esc(''+e)+'</div>';
     activePlugin = null;
   }
 }
 function unmountActivePlugin(){
-  if(activePlugin && activePlugin.instance && typeof activePlugin.instance.unmount==='function'){
-    try { activePlugin.instance.unmount(); } catch(e){}
-  }
+  if(activePlugin){ try { onboardPluginRuntime.close(); } catch(e){} }
   activePlugin = null; removePluginCss();
 }
 function pluginClose(){
@@ -1963,7 +2122,7 @@ var INBOX_FORWARD_STATUSES = ['received','reviewed','archived']; // office never
 
 function inboxApiBase(){ return String(crewConfig().api_base||'').replace(/\/+$/,''); }
 function pluginHasPerm(pluginId, perm){
-  var p = SkipiPlugins[pluginId]; var perms = (p && p.manifest && p.manifest.permissions) || [];
+  var p = SkipiPlugins[pluginId]; var perms = manifestPermissions((p && p.manifest) || {});
   return perms.indexOf(perm) >= 0;
 }
 // Shared precondition for every inbox call: an honest-state string, or null when
@@ -2062,6 +2221,8 @@ function makeHostApi(pluginId){
   var ns = 'skipi-plugin:'+pluginId+':';
   var subs = [];
   return {
+    host: { id:'onboard', version:APP_VERSION },
+    role: 'vessel',
     theme: {
       get: function(){ return document.documentElement.getAttribute('data-theme') || 'light'; },
       subscribe: function(cb){ if(typeof cb==='function') subs.push(cb); return function(){ var i=subs.indexOf(cb); if(i>=0) subs.splice(i,1); }; }
@@ -2099,7 +2260,7 @@ function makeHostApi(pluginId){
       setStatus: function(id, status){ return hostInboxSetStatus(pluginId, id, status); },
       photoUrl:  function(photo){ return hostInboxPhotoUrl(pluginId, photo); }
     },
-    permissions: { listGranted: function(){ var p=SkipiPlugins[pluginId]; return (p&&p.manifest&&p.manifest.permissions)||[]; } }
+    permissions: { listGranted: function(){ var p=SkipiPlugins[pluginId]; return manifestPermissions((p&&p.manifest)||{}); } }
   };
 }
 

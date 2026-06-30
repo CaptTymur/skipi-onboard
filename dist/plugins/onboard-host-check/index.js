@@ -34,7 +34,7 @@
     manifest: manifest,
     mount: function (container, host) {
       var theme = (host && host.theme && host.theme.get && host.theme.get()) || 'light';
-      var count = (host && host.storage && host.storage.get('count')) || 0;
+      var count = 0;
       container.innerHTML =
         '<div class="ohc">'
         + '<div class="ohc-row"><b>Host theme:</b> <span class="ohc-theme">' + theme + '</span></div>'
@@ -48,10 +48,17 @@
         + 'certificates or pairing data, and makes no network calls.</div>'
         + '</div>';
 
+      var countEl = container.querySelector('.ohc-count');
+      // Isolated host storage is reached only through the bridge (async):
+      // storage.get(key, cb). The plugin has no access to host localStorage.
+      if (host && host.storage && host.storage.get) {
+        host.storage.get('count', function (v) { count = (v || 0); if (countEl) countEl.textContent = count; });
+      }
+
       container.querySelector('.ohc-inc').addEventListener('click', function () {
-        count = ((host.storage.get('count') || 0) + 1);
-        host.storage.set('count', count);
-        container.querySelector('.ohc-count').textContent = count;
+        count = count + 1;
+        if (host.storage && host.storage.set) host.storage.set('count', count);
+        if (countEl) countEl.textContent = count;
       });
       container.querySelector('.ohc-title').addEventListener('click', function () {
         if (host.navigation && host.navigation.setTitle) host.navigation.setTitle('Onboard Host Check ✓');
