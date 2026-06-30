@@ -51,6 +51,11 @@ plugin, and hands it a **narrow host API**.
   `permissions.listGranted`.
 - Bundled demo fixture: `dist/plugins/onboard-host-check/` — verifies the host
   contract only (not a product plugin).
+- Operations bridge for first-party vessel plugins:
+  `host.operations.listOwn/getOwn/createOwn/updateOwn/comment`. It is dormant
+  behind the same backend/config gate, requires explicit
+  `operations.items.*_own_vessel` permissions, injects the bearer internally,
+  and never lets plugin code choose `vessel_imo`.
 
 **Forbidden to plugins by default** (no host API exposes them): crew list,
 paired-device identities, vessel documents, vessel certificates, QR pairing

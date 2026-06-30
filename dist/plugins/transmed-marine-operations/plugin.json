@@ -1,0 +1,87 @@
+{
+  "id": "transmed-marine-operations",
+  "fqid": "app.skipi.plugins.transmed-marine-operations",
+  "name": "Transmed Marine Operations",
+  "nameRu": "Transmed Marine Operations",
+  "version": "0.1.0",
+  "developer": "Skipi (first-party)",
+  "kind": "workflow",
+  "distribution": {
+    "mode": "bundled_first_party_or_signed_pack",
+    "remote_code": false
+  },
+  "supported_hosts": [
+    "management",
+    "onboard"
+  ],
+  "entrypoints": {
+    "ui": "index.js",
+    "style": "index.css"
+  },
+  "roles": {
+    "management": {
+      "role": "management",
+      "context": "fleet_operations",
+      "capabilities": [
+        "fleet.vessels.read",
+        "operations.items.read",
+        "operations.items.write",
+        "operations.items.assign",
+        "operations.items.close",
+        "operations.references.read",
+        "operations.reports.read",
+        "files.attach.read",
+        "files.attach.write",
+        "audit.read"
+      ]
+    },
+    "onboard": {
+      "role": "vessel",
+      "context": "vessel_operations",
+      "capabilities": [
+        "vessel.current.read",
+        "operations.items.read_own_vessel",
+        "operations.items.update_own_vessel",
+        "operations.items.create_own_vessel",
+        "files.attach.write",
+        "queue.outbox"
+      ]
+    }
+  },
+  "network": "host-mediated",
+  "data_access": "role_scoped",
+  "workflow": {
+    "type": "outstandings",
+    "legacy_source": "Transmed_Marine Delphi VCL",
+    "mvp": [
+      "outstandings_board",
+      "management_create_edit_assign_close",
+      "vessel_ack_update_comment_create_own",
+      "attachment_placeholder",
+      "audit_history",
+      "html_print_view"
+    ],
+    "status_model": [
+      "open",
+      "acknowledged",
+      "in_progress",
+      "waiting_shore",
+      "waiting_vessel",
+      "completed_by_vessel",
+      "closed"
+    ],
+    "sync_states": [
+      "local_draft",
+      "queued",
+      "synced",
+      "failed"
+    ]
+  },
+  "safety": {
+    "no_raw_sql": true,
+    "no_plaintext_passwords": true,
+    "no_cross_vessel_access_from_vessel_role": true,
+    "audit_every_change": true,
+    "honest_fixture_mode": true
+  }
+}
