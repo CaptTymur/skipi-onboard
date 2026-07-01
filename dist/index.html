@@ -373,6 +373,32 @@
 <script src="./vendor/qrcode-generator.js"></script>
 <script>
 var APP_VERSION = '0.1.0';
+var APP_BUILD_SHA = 'unknown';
+function buildShortSha(){
+  return APP_BUILD_SHA && APP_BUILD_SHA !== 'unknown' ? APP_BUILD_SHA.slice(0,7) : '';
+}
+function appVersionLabel(){
+  var sha = buildShortSha();
+  return 'v'+APP_VERSION+(sha?' · '+sha:'');
+}
+function updateBuildLabels(){
+  updateVerTag();
+  if(currentModule==='settings') renderSettings();
+}
+function setBuildInfo(info){
+  if(info && info.version) APP_VERSION = String(info.version);
+  if(info && info.sha) APP_BUILD_SHA = String(info.sha);
+  else if(info && info.short_sha) APP_BUILD_SHA = String(info.short_sha);
+  updateBuildLabels();
+}
+async function loadBuildInfo(){
+  try {
+    var core = window.__TAURI__ && window.__TAURI__.core;
+    if(core && core.invoke) setBuildInfo(await core.invoke('get_build_info'));
+  } catch(e) {
+    updateBuildLabels();
+  }
+}
 
 // ---------- helpers ----------
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
@@ -1473,7 +1499,7 @@ function renderSettings(){
     h += settingsTitle('About Skipi On Board', 'Local desktop shell for vessel-side workflows.');
     h += '<div>';
     h += settingsRow('Application', 'Skipi On Board', '');
-    h += settingsRow('Version', 'v'+esc(APP_VERSION), '');
+    h += settingsRow('Version', esc(appVersionLabel()), '<span class="set-pill" data-qa="app-build-sha">'+esc(buildShortSha()||'source')+'</span>');
     h += settingsRow('UI family', 'Settings inherit the shared Skipi desktop Settings Standard: Obsidian-like two-panel modal, #004564 accent, visible paired-devices section, product-specific vessel/workflow sections.', '');
     h += settingsRow('Status', 'Local honest UI shell. No build/release/backend work in this pass.', '<span class="set-pill warn">review</span>');
     h += '</div></div>';
@@ -2275,7 +2301,7 @@ function setDevMode(on){
   if(currentModule==='apps' && !activePlugin){ appsState.selectedId=null; renderApps(); }
   else if(currentModule==='settings'){ renderSettings(); }
 }
-function updateVerTag(){ var el=document.getElementById('ver-tag'); if(el) el.textContent='v'+APP_VERSION+(isDevMode()?' · dev':''); }
+function updateVerTag(){ var el=document.getElementById('ver-tag'); if(el) el.textContent=appVersionLabel()+(isDevMode()?' · dev':''); }
 var _verClicks=0, _verTimer=null;
 function verTagClick(){
   _verClicks++;
@@ -2288,6 +2314,7 @@ function verTagClick(){
 // Guarded so a headless harness can load the shipped host code (makeHostApi,
 // inbox bridge, crew config) without a DOM. Never set in production.
 if(!(typeof window!=='undefined' && window.__ONBOARD_NO_BOOT__)){
+  loadBuildInfo();
   updateVerTag();
   (function(){ var v=document.getElementById('ver-tag'); if(v){ v.style.cursor='default'; v.addEventListener('click', verTagClick); } })();
   loadBundledPlugins();

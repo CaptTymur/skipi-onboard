@@ -6,6 +6,28 @@
 // transfer to the ship's comms PC land, add #[tauri::command] functions
 // here (mirror skipi-crewing/src-tauri/src/{api,db}.rs).
 
+#[derive(serde::Serialize)]
+struct BuildInfo {
+    version: String,
+    sha: String,
+    short_sha: String,
+}
+
+#[tauri::command]
+fn get_build_info() -> BuildInfo {
+    let sha = option_env!("SKIPI_BUILD_SHA").unwrap_or("unknown").to_string();
+    let short_sha = if sha == "unknown" {
+        "unknown".to_string()
+    } else {
+        sha.chars().take(7).collect()
+    };
+    BuildInfo {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        sha,
+        short_sha,
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
@@ -22,6 +44,7 @@ pub fn run() {
     }
 
     builder
+        .invoke_handler(tauri::generate_handler![get_build_info])
         .run(tauri::generate_context!())
         .expect("error while running Skipi On Board");
 }
