@@ -392,12 +392,19 @@ function setBuildInfo(info){
   updateBuildLabels();
 }
 async function loadBuildInfo(){
-  try {
-    var core = window.__TAURI__ && window.__TAURI__.core;
-    if(core && core.invoke) setBuildInfo(await core.invoke('get_build_info'));
-  } catch(e) {
-    updateBuildLabels();
+  for(var i=0;i<30;i++){
+    try {
+      var core = window.__TAURI__ && window.__TAURI__.core;
+      if(core && core.invoke){
+        setBuildInfo(await core.invoke('get_build_info'));
+        return;
+      }
+    } catch(e) {
+      // Tauri bridge can be injected just after this inline script runs.
+    }
+    await new Promise(function(resolve){ setTimeout(resolve, 100); });
   }
+  updateBuildLabels();
 }
 
 // ---------- helpers ----------
