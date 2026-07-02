@@ -39,7 +39,8 @@ globalThis.__ONBOARD_NO_BOOT__ = true;
 globalThis.fetch = async () => ({ status: 599, ok: false, async json() { return {}; }, async text() { return ''; } });
 
 const EXPORTS = ['appsState', 'appsLauncherHtml', 'appsLauncherBodyHtml', 'appsFilter', 'appsSetView', 'installedPluginIds', 'appsShortLabel', 'appsListHtml', 'renderApps', 'catalogPluginIds', 'SkipiPlugins', 'BUNDLED_PLUGIN_DIRS', 'pluginIntegrity',
-  'vdocsState', 'renderVesselDocs', 'vdocsDocs', 'vdocsOpenAdd', 'vdocsCreate', 'vdocsSelect', 'vdocsSetFilter', 'vdocsSearch', 'vdocsField', 'vdocsApplyFileMeta', 'vdocsDelete', 'vdocsFilterCounts', 'vdocStatus', 'vdocValidity', 'VDOC_CATEGORIES'];
+  'vdocsState', 'renderVesselDocs', 'vdocsDocs', 'vdocsOpenAdd', 'vdocsCreate', 'vdocsSelect', 'vdocsSetFilter', 'vdocsSearch', 'vdocsField', 'vdocsApplyFileMeta', 'vdocsDelete', 'vdocsFilterCounts', 'vdocStatus', 'vdocValidity', 'VDOC_CATEGORIES',
+  'makeHostApi'];
 let M;
 try { M = new Function(script + '\nreturn {' + EXPORTS.join(',') + '};')(); }
 catch (e) { console.error('load failed:', e); process.exit(1); }
@@ -129,7 +130,14 @@ ok(script.includes('plugin-offline-state'), 'plugin-offline-state hook reserved 
 // ===================== Vessel Documents v0 (vessel-owned local vault) =====================
 globalThis.confirm = () => true;
 const scr = () => els.get('scr-content').innerHTML;
-const isoIn = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+// Local-date helper: vdocDaysLeft counts whole days from LOCAL midnight, so the
+// fixture dates must be local too — a UTC-based toISOString() here shifts all
+// boundary assertions by one day between local 00:00 and UTC midnight (review
+// finding F2 of the vdocs v0 review, observed live on 2026-07-03).
+const isoIn = (n) => {
+  const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
 const vdocsReset = () => {
   store.delete('skipi-onboard-vdocs'); store.delete('skipi-onboard-crew-config');
   M.vdocsState.selectedId = null; M.vdocsState.filter = 'all'; M.vdocsState.q = ''; M.vdocsState.addOpen = false; M.vdocsState.err = null;
@@ -271,6 +279,40 @@ try {
 } catch (e) { /* navigator not settable here */ }
 if (!vOfflineTested) ok(vregion.includes('data-qa="docs-offline"'), 'offline pill reserved in source (runtime cannot toggle navigator)');
 vdocsReset();
+
+// ===================== Fresh-install light theme (Homes Light Theme Sweep 2026-07-03) =====================
+// On Board must first-launch LIGHT, never dark by default. Dark is NOT a
+// supported user option in On Board today (no theme switcher, no dark palette),
+// so there is no saved-dark preference to preserve — these checks pin the
+// light-only invariants so a dark default cannot regress in silently.
+
+section('theme — fresh install is light (static invariants)');
+ok(HTML.includes('<html lang="en" data-theme="light">'), 'html root hardcodes data-theme="light"');
+ok(HTML.includes(':root, [data-theme="light"]'), 'light palette is the :root default');
+ok(!/\[data-theme="dark"\]/.test(HTML), 'no dark palette CSS block exists');
+ok(!/prefers-color-scheme/i.test(HTML), 'no prefers-color-scheme anywhere — OS dark mode cannot influence the app');
+ok(!/matchMedia/.test(script), 'no matchMedia usage — no runtime OS-theme detection');
+ok(!/['"]dark['"]/.test(script), 'no "dark" string literal in JS — no dark fallback can exist');
+ok(!/localStorage\.(getItem|setItem)\(\s*['"][^'"]*theme[^'"]*['"]/i.test(script), 'no theme persistence key — nothing can restore a dark state');
+
+section('theme — plugin host bridge reports light on fresh launch');
+ok(script.includes("getAttribute('data-theme') || 'light'"), 'host theme.get falls back to light');
+ok(script.includes("var slug=null, theme='light'"), 'sandbox shim initial theme is light');
+ok(script.includes("theme=m.theme||'light'"), 'sandbox shim init-message fallback is light');
+ok(script.includes("theme:(api.theme&&api.theme.get&&api.theme.get())||'light'"), 'bridge sendInit falls back to light');
+
+section('theme — runtime: fresh empty storage + simulated OS dark still light');
+store.clear();
+globalThis.matchMedia = () => ({ matches: true, media: '(prefers-color-scheme: dark)', addEventListener: noop, removeEventListener: noop });
+const freshApi = M.makeHostApi('theme-probe');
+ok(freshApi.theme.get() === 'light', 'theme bridge reports light with fresh storage (documentElement says light)');
+const realGetAttr = globalThis.document.documentElement.getAttribute;
+globalThis.document.documentElement.getAttribute = () => null;
+ok(freshApi.theme.get() === 'light', 'theme bridge falls back to light even with no data-theme attribute at all');
+globalThis.document.documentElement.getAttribute = realGetAttr;
+ok(freshApi.theme.get() === 'light', 'simulated prefers-color-scheme:dark has no effect — still light');
+delete globalThis.matchMedia;
+store.clear();
 
 console.log('\n' + (fail === 0 ? 'ALL GREEN' : 'FAILURES') + ': ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);
