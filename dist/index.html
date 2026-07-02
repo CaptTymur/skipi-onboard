@@ -172,14 +172,86 @@
   .crew-empty-s { font-size:12.5px; color:var(--text2); margin-top:6px; line-height:1.5; max-width:440px; margin-left:auto; margin-right:auto; }
   .crew-empty .pair-cta { margin-top:16px; }
 
-  /* ---- vessel documents module ---- */
-  .vdoc-card { display:flex; gap:13px; align-items:flex-start; padding:15px; border:1px solid var(--border);
-    border-radius:13px; background:var(--surface); }
-  .vdoc-icon { width:48px; height:48px; flex:0 0 auto; border-radius:12px; background:var(--accent-bg); color:var(--accent);
-    display:flex; align-items:center; justify-content:center; font-size:24px; }
-  .vdoc-body { display:flex; flex-direction:column; gap:3px; min-width:0; }
-  .vdoc-name { font-size:15px; font-weight:800; line-height:1.2; }
-  .vdoc-sub { font-size:12px; color:var(--text2); line-height:1.4; }
+  /* ---- vessel documents module (v0 vessel vault) ---- */
+  .docs-screen { padding:24px 28px 48px; max-width:1360px; }
+  .docs-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .docs-offline { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700;
+    color:var(--text2); background:var(--hover); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
+  .docs-wrap { display:grid; grid-template-columns:360px minmax(0,1fr); gap:24px; align-items:start; margin-top:18px; }
+  .docs-left { min-width:0; }
+  .docs-right { min-width:0; }
+  .docs-left-head { display:flex; gap:8px; margin-bottom:12px; }
+  .docs-search { flex:1; display:flex; align-items:center; gap:8px; background:var(--surface);
+    border:1px solid var(--border); border-radius:9px; padding:0 11px; height:36px; }
+  .docs-search:focus-within { border-color:var(--accent); background:#fff; }
+  .docs-search input { flex:1; border:0; outline:0; background:transparent; font-size:13px; color:var(--text); font-family:var(--font-ui); min-width:0; }
+  .docs-add-btn { height:36px; padding:0 12px; border-radius:9px; border:1px solid var(--accent); background:var(--accent);
+    color:#fff; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .docs-add-btn:hover { background:var(--accent-strong); }
+  .docs-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .docs-chip { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--text2);
+    background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:4px 10px; cursor:pointer; }
+  .docs-chip:hover { color:var(--accent); border-color:var(--accent); }
+  .docs-chip.active { color:#fff; background:var(--accent); border-color:var(--accent); }
+  .docs-chip .n { font-weight:800; opacity:.75; }
+  .docs-tree { display:flex; flex-direction:column; gap:8px; }
+  .docs-cat { border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; }
+  .docs-cat-head { display:flex; align-items:center; gap:9px; width:100%; padding:10px 12px; background:transparent;
+    border:0; cursor:pointer; text-align:left; font:inherit; color:var(--text); }
+  .docs-cat-head:hover { background:var(--hover); }
+  .docs-cat-ico { font-size:16px; }
+  .docs-cat-name { flex:1; font-size:13px; font-weight:800; min-width:0; }
+  .docs-cat-n { font-size:11.5px; color:var(--text2); font-weight:700; }
+  .docs-caret { font-size:10px; color:var(--text2); }
+  .docs-rows { border-top:1px solid var(--border); background:#fff; }
+  .docs-row { display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border:0; border-top:1px solid var(--border);
+    background:transparent; cursor:pointer; text-align:left; font:inherit; color:var(--text); }
+  .docs-row:first-child { border-top:0; }
+  .docs-row:hover { background:var(--hover); }
+  .docs-row.sel { background:var(--accent-bg); }
+  .docs-row-title { flex:1; font-size:12.5px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .docs-dot { width:9px; height:9px; flex:0 0 auto; border-radius:50%; background:#c3c8cf; }
+  .docs-dot.st-red { background:#b3402a; } .docs-dot.st-orange { background:var(--orange); }
+  .docs-dot.st-yellow { background:#d4a017; } .docs-dot.st-green { background:var(--green); }
+  .docs-dot.st-muted { background:#c3c8cf; }
+  .docs-kind { font-size:9.5px; font-weight:800; letter-spacing:.03em; padding:2px 6px; border-radius:6px;
+    background:var(--hover); color:var(--text2); text-transform:uppercase; flex:0 0 auto; }
+  .docs-kind.req { background:var(--accent-bg); color:var(--accent); }
+  .docs-badge { display:inline-flex; align-items:center; font-size:11px; font-weight:800; border-radius:999px;
+    padding:3px 10px; color:#fff; background:#8a919b; white-space:nowrap; }
+  .docs-badge.st-red { background:#b3402a; } .docs-badge.st-orange { background:var(--orange); }
+  .docs-badge.st-yellow { background:#b8860b; } .docs-badge.st-green { background:var(--green); }
+  .docs-badge.st-muted { background:#8a919b; }
+  .docs-days { font-size:11px; color:var(--text2); }
+  .docs-detail-card { border:1px solid var(--border); border-radius:14px; background:var(--surface); padding:18px; }
+  .docs-det-head { display:flex; align-items:center; gap:12px; }
+  .docs-title-inp { flex:1; font-size:17px; font-weight:800; color:var(--text); background:#fff; border:1px solid var(--border);
+    border-radius:9px; padding:9px 12px; min-width:0; font-family:var(--font-ui); }
+  .docs-title-inp:focus { outline:none; border-color:var(--accent); }
+  .docs-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:14px; }
+  .docs-field { min-width:0; }
+  .docs-perm-chk { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); margin-top:26px; cursor:pointer; }
+  .docs-reg-chip { font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--accent-bg2); border-radius:999px; padding:3px 9px; }
+  .docs-file { display:flex; gap:12px; align-items:flex-start; border:1px solid var(--border); border-radius:11px;
+    background:#fff; padding:13px; margin-top:14px; }
+  .docs-file-ico { font-size:22px; }
+  .docs-file-meta { flex:1; min-width:0; }
+  .docs-file-name { font-size:13px; font-weight:700; word-break:break-all; }
+  .docs-file-sub { font-size:11.5px; color:var(--text2); margin-top:2px; }
+  .docs-file-note { font-size:11.5px; color:var(--text2); margin-top:8px; line-height:1.45; }
+  .docs-drop { border:1.5px dashed var(--border); border-radius:11px; background:#fff; padding:22px 16px;
+    margin-top:14px; text-align:center; color:var(--text2); font-size:12.5px; }
+  .docs-drop.over { border-color:var(--accent); background:var(--accent-bg); }
+  .docs-autosave { font-size:11.5px; color:var(--text2); margin-top:12px; }
+  .docs-danger { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .docs-stat { text-align:left; cursor:pointer; font:inherit; border:1px solid var(--border); }
+  .docs-stat:hover { border-color:var(--accent); }
+  .docs-add-ov { position:fixed; inset:0; z-index:120; background:rgba(15,23,42,.26); display:flex;
+    align-items:center; justify-content:center; padding:24px; }
+  .docs-add-card { width:min(440px,92vw); background:#fff; border:1px solid #cfd7df; border-radius:15px;
+    padding:20px; box-shadow:0 18px 44px rgba(15,23,42,.14); }
+  @media (max-width:900px){ .docs-wrap { grid-template-columns:1fr; } .docs-fields { grid-template-columns:1fr; } }
 
   /* ---- plugin host ---- */
   .apps-badge.avail { background:var(--accent-bg); color:var(--accent); }
@@ -782,7 +854,7 @@ function appsDetailHtml(app){
 
 // ===================== Module shell (Crew / Apps / Vessel Documents) =====================
 // Three base modules. Crew = people + QR pairing; Apps = onboard tools;
-// Vessel Documents = the ship's document vault (scaffold). All local-only.
+// Vessel Documents = the ship's own local document vault (v0). All local-only.
 var currentModule = 'crew'; // 'crew' | 'myvessel' | 'apps' | 'vdocs'
 function setActiveTab(mod){
   var tabs = document.querySelectorAll('.mod-tab');
@@ -907,33 +979,496 @@ function renderCrew(){
   setContent(h);
 }
 
-// ---------- Vessel Documents module (scaffold) ----------
-var VDOC_SECTIONS = [
-  { icon:'📜', name:'Certificates',        sub:'Class, flag, statutory and trading certificates with validity tracking.' },
-  { icon:'📘', name:'Manuals',             sub:'Equipment, machinery and operational manuals for the vessel.' },
-  { icon:'🛡️', name:'Safety Management',   sub:'SMS manual, procedures, drills and ISM documentation.' },
-  { icon:'🗒️', name:'Checklists / Forms',  sub:'Onboard checklists, permits to work and record forms.' },
-  { icon:'🚢', name:'Cargo / Voyage docs', sub:'Cargo papers, stowage, voyage instructions and port documents.' }
+// ---------- Vessel Documents module (v0 — vessel-owned local vault) ----------
+// =========================================================================
+// VDOCS NO-NETWORK BOUNDARY START
+// Everything between these markers is statically checked by
+// tests/apps_launcher_harness.mjs: the Vessel Documents surface is a
+// vessel-owned, local/offline vault (Docs Module Standard v1, On Board
+// adapter). Nothing here may talk to a server or reuse the crew/vessel
+// HTTP helpers. Records live in localStorage under `skipi-onboard-vdocs`;
+// v0 stores document METADATA (incl. the file record) — file bytes are not
+// copied yet (durable copy-into-vault storage is a separate src-tauri slice).
+// "Stored in this vessel vault — nothing leaves the vessel."
+// =========================================================================
+var VDOC_CATEGORIES = [
+  { slug:'certificates',      icon:'📜', name:'Certificates',        sub:'Class, flag, statutory and trading certificates with validity tracking.' },
+  { slug:'manuals',           icon:'📘', name:'Manuals',             sub:'Equipment, machinery and operational manuals for the vessel.' },
+  { slug:'safety-management', icon:'🛡️', name:'Safety Management',   sub:'SMS manual, procedures, drills and ISM documentation.' },
+  { slug:'checklists-forms',  icon:'🗒️', name:'Checklists / Forms',  sub:'Onboard checklists, permits to work and record forms.' },
+  { slug:'cargo-voyage',      icon:'🚢', name:'Cargo / Voyage docs', sub:'Cargo papers, stowage, voyage instructions and port documents.' }
 ];
-function renderVesselDocs(){
-  var h = '<div class="apps-screen">';
-  h += '<div class="apps-head"><div class="apps-head-title">Vessel Documents</div>'
-     + '<div class="apps-head-sub">The ship’s document vault — a calm, structured home for the vessel’s certificates and manuals. '
-     + 'This is a scaffold preview: no files are stored yet, and nothing leaves the vessel.</div></div>';
-  h += '<div class="apps-cat-title">Document sections</div><div class="apps-grid">';
-  for(var i=0;i<VDOC_SECTIONS.length;i++){
-    var d = VDOC_SECTIONS[i];
-    h += '<div class="vdoc-card"><span class="vdoc-icon">'+d.icon+'</span>'
-       + '<span class="vdoc-body"><span class="vdoc-name">'+esc(d.name)+'</span>'
-       + '<span class="vdoc-sub">'+esc(d.sub)+'</span>'
-       + '<span class="apps-badge soon">Coming soon</span></span></div>';
+var VDOC_FILTERS = [
+  ['all','All'], ['required','Required'], ['missing','Missing'],
+  ['expiring','Expiring'], ['uploaded','Uploaded'], ['custom','Custom']
+];
+// Docs Standard v1 §2.3 taxonomy: display status = presence-derived (missing)
+// or validity (permanent | no_expiry | valid | expiring_warning |
+// expiring_critical | expired). Thresholds 30/90 days; 180/365 only for sort.
+var VDOC_STATUS_META = {
+  missing:           { label:'Missing',       cls:'st-red'    },
+  expired:           { label:'Expired',       cls:'st-red'    },
+  expiring_critical: { label:'Expiring soon', cls:'st-orange' },
+  expiring_warning:  { label:'Attention',     cls:'st-yellow' },
+  valid:             { label:'Valid',         cls:'st-green'  },
+  permanent:         { label:'Permanent',     cls:'st-green'  },
+  no_expiry:         { label:'No expiry',     cls:'st-muted'  },
+  no_file:           { label:'No file',       cls:'st-muted'  }
+};
+var VDOCS_STORE_KEY = 'skipi-onboard-vdocs';
+var vdocsState = { selectedId:null, filter:'all', q:'', collapsed:{}, err:null, addOpen:false };
+
+function vdocsCatBySlug(slug){ for(var i=0;i<VDOC_CATEGORIES.length;i++){ if(VDOC_CATEGORIES[i].slug===slug) return VDOC_CATEGORIES[i]; } return null; }
+function vdocsIsDemo(){ try { return crewConfig().vessel_mode==='demo'; } catch(e){ return false; } }
+
+// Fail-closed vault read: throws on corrupt/unreadable data so callers surface
+// an honest docs-error state instead of silently rendering an empty vault.
+function vdocsRead(){
+  var raw = localStorage.getItem(VDOCS_STORE_KEY);
+  if(!raw) return { docs: [] };
+  var p = JSON.parse(raw);
+  if(!p || !Array.isArray(p.docs)) throw new Error('vault record shape invalid');
+  return p;
+}
+function vdocsWrite(v){ localStorage.setItem(VDOCS_STORE_KEY, JSON.stringify(v)); }
+// Visible docs for the current mode. Docs created in demo mode carry
+// fixture:true and are hidden on a real vessel — demo data never leaks.
+function vdocsDocs(){
+  var demo = vdocsIsDemo();
+  return vdocsRead().docs.filter(function(d){ return demo ? true : !d.fixture; });
+}
+function vdocsFind(docs, id){ for(var i=0;i<docs.length;i++){ if(docs[i].id===id) return docs[i]; } return null; }
+function vdocsById(id){ try { return vdocsFind(vdocsDocs(), id); } catch(e){ return null; } }
+// Guarded mutation: never writes over a vault that cannot be read (fail-closed).
+function vdocsMutate(fn){
+  var v;
+  try { v = vdocsRead(); }
+  catch(e){ vdocsState.err = ''+((e&&e.message)||e); renderVesselDocs(); showToast('Vault data unreadable — edits are blocked'); return false; }
+  fn(v);
+  try { vdocsWrite(v); } catch(e){ showToast('Could not save to the vessel vault'); return false; }
+  return true;
+}
+
+// Demo vessel: seed example documents once (empty vault only). They are
+// ordinary editable records flagged fixture:true, scoped to demo mode.
+function vdocsMaybeSeedDemo(){
+  if(!vdocsIsDemo()) return;
+  var v = vdocsRead();
+  if(v.docs.length) return;
+  var day = 24*60*60*1000, now = Date.now();
+  function iso(off){ return new Date(now + off*day).toISOString().slice(0,10); }
+  function fx(cat, title, kind, fileName, validTo, perm, reg){
+    return { id:'doc_'+randHex(6), title:title, category:cat, kind:kind, template_id:null,
+      regulatory_basis:reg||'', doc_number:'', issued_by:'', notes:'',
+      file: fileName ? { file_name:fileName, file_size:0, content_type:'application/pdf' } : null,
+      has_expiry: !!validTo, is_permanent: !!perm, valid_from:'', valid_to: validTo||'',
+      provenance:{ source:'owner' }, fixture:true,
+      created_at:new Date(now).toISOString(), updated_at:new Date(now).toISOString() };
+  }
+  v.docs = [
+    fx('certificates','Safety Management Certificate (SMC)','required','smc.pdf', iso(200), false, 'ISM Code'),
+    fx('certificates','IOPP Certificate','required','iopp.pdf', iso(45), false, 'MARPOL Annex I'),
+    fx('certificates','Cargo Ship Safety Equipment Certificate','required','safety-equipment.pdf', iso(12), false, 'SOLAS'),
+    fx('certificates','Minimum Safe Manning Document','required', null, '', false, 'SOLAS V/14'),
+    fx('safety-management','SMS Manual — shipboard copy','required','sms-manual.pdf', '', true, 'ISM Code'),
+    fx('manuals','Main Engine Operation Manual','custom','me-manual.pdf', '', false, ''),
+    fx('cargo-voyage','P&I Certificate of Entry','optional','pni.pdf', iso(-10), false, '')
+  ];
+  vdocsWrite(v);
+}
+
+// ---- classification (Docs Standard v1 §2.3) ----
+function vdocDaysLeft(d){
+  if(!d.valid_to) return null;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var vt = new Date(String(d.valid_to)+'T00:00:00');
+  if(isNaN(vt.getTime())) return null;
+  return Math.floor((vt.getTime()-today.getTime())/86400000);
+}
+function vdocValidity(d){
+  if(d.is_permanent) return 'permanent';
+  var days = vdocDaysLeft(d);
+  if(days==null) return 'no_expiry';
+  if(days<0) return 'expired';
+  if(days<30) return 'expiring_critical';
+  if(days<90) return 'expiring_warning';
+  return 'valid';
+}
+function vdocStatus(d){
+  if(!d.file) return d.kind==='required' ? 'missing' : 'no_file';
+  return vdocValidity(d);
+}
+function vdocUrgency(d){
+  var st = vdocStatus(d);
+  if(st==='expired') return 7;
+  if(st==='missing') return 6;
+  if(st==='expiring_critical') return 5;
+  if(st==='expiring_warning') return 4;
+  if(st==='valid'){ var days=vdocDaysLeft(d); if(days!=null && days<180) return 3; if(days!=null && days<365) return 2; return 1; }
+  if(st==='permanent') return 1;
+  return 0;
+}
+function vdocKindRank(d){ return d.kind==='required' ? 0 : (d.kind==='optional' ? 1 : 2); }
+function vdocSortCmp(a,b){
+  var ka=vdocKindRank(a), kb=vdocKindRank(b);
+  if(ka!==kb) return ka-kb;
+  var ua=vdocUrgency(a), ub=vdocUrgency(b);
+  if(ua!==ub) return ub-ua;
+  return String(a.title||'').localeCompare(String(b.title||''));
+}
+function vdocMatchesFilter(d, f){
+  var st = vdocStatus(d);
+  if(f==='required') return d.kind==='required';
+  if(f==='missing')  return st==='missing';
+  if(f==='expiring') return !!d.file && (st==='expired' || st==='expiring_critical' || st==='expiring_warning');
+  if(f==='uploaded') return !!d.file;
+  if(f==='custom')   return d.kind==='custom';
+  return true;
+}
+function vdocMatchesQuery(d, q){
+  if(!q) return true;
+  var cat = vdocsCatBySlug(d.category);
+  var hay = (String(d.title||'')+' '+String(cat?cat.name:'')+' '+String(d.doc_number||'')+' '
+    +String(d.issued_by||'')+' '+String((d.file&&d.file.file_name)||'')).toLowerCase();
+  return hay.indexOf(q)>=0;
+}
+function vdocsFilterCounts(docs, q){
+  var scope = docs.filter(function(d){ return vdocMatchesQuery(d, q); });
+  var out = {};
+  for(var i=0;i<VDOC_FILTERS.length;i++){
+    var f = VDOC_FILTERS[i][0];
+    out[f] = scope.filter(function(d){ return vdocMatchesFilter(d, f); }).length;
+  }
+  return out;
+}
+
+// ---- rendering ----
+function vdocsFmtSize(n){
+  n = Number(n)||0;
+  if(n<=0) return 'size n/a';
+  if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+function vdocsBadgeHtml(d){
+  var st = vdocStatus(d), m = VDOC_STATUS_META[st]||VDOC_STATUS_META.no_file;
+  return '<span class="docs-badge '+m.cls+'" data-qa="docs-status-badge">'+m.label+'</span>';
+}
+function vdocsKindBadgeHtml(kind){
+  var lbl = kind==='required' ? 'REQ' : (kind==='optional' ? 'OPT' : 'CUSTOM');
+  return '<span class="docs-kind'+(kind==='required'?' req':'')+'">'+lbl+'</span>';
+}
+function vdocsDaysText(d){
+  if(!d.file || d.is_permanent) return '';
+  var days = vdocDaysLeft(d);
+  if(days==null) return '';
+  if(days<0) return 'Expired '+(-days)+' d ago';
+  return 'Expires in '+days+' d';
+}
+function vdocsRowHtml(d){
+  var st = vdocStatus(d), m = VDOC_STATUS_META[st]||VDOC_STATUS_META.no_file;
+  return '<button class="docs-row'+(vdocsState.selectedId===d.id?' sel':'')+'" type="button" data-qa="docs-item-'+esc(d.id)+'" onclick="vdocsSelect(\''+esc(d.id)+'\')">'
+    + '<span class="docs-dot '+m.cls+'"></span>'
+    + '<span class="docs-row-title">'+esc(d.title||'Untitled')+'</span>'
+    + vdocsKindBadgeHtml(d.kind)
+    + '</button>';
+}
+function vdocsLeftBodyHtml(docs){
+  var q = String(vdocsState.q||'').trim().toLowerCase();
+  var counts = vdocsFilterCounts(docs, q);
+  var scope = docs.filter(function(d){ return vdocMatchesQuery(d, q); });
+  var list = scope.filter(function(d){ return vdocMatchesFilter(d, vdocsState.filter); });
+  var h = '<div class="docs-chips">';
+  for(var i=0;i<VDOC_FILTERS.length;i++){
+    var f = VDOC_FILTERS[i];
+    h += '<button class="docs-chip'+(vdocsState.filter===f[0]?' active':'')+'" type="button" data-qa="docs-filter-'+f[0]+'" '
+      + 'onclick="vdocsSetFilter(\''+f[0]+'\')">'+f[1]+' <span class="n">'+counts[f[0]]+'</span></button>';
   }
   h += '</div>';
-  h += '<div class="apps-note" style="margin-top:18px;">Scaffold only — the document vault, file import and validity tracking are not built yet. '
-     + 'No real files, no local vault logic, no backend.</div>';
+  if(!list.length){
+    h += '<div class="crew-empty" data-qa="docs-empty" style="padding:20px 14px;margin-bottom:10px"><div class="crew-empty-icon">🔍</div>'
+      + '<div class="crew-empty-t">No documents match</div>'
+      + '<div class="crew-empty-s">'+(q ? 'No documents match this search in the vessel vault.' : 'No documents match this filter. Change the filter or add a document.')+'</div></div>';
+  }
+  h += '<div class="docs-tree" data-qa="docs-tree">';
+  for(var c=0;c<VDOC_CATEGORIES.length;c++){
+    var cat = VDOC_CATEGORIES[c];
+    var rows = list.filter(function(d){ return d.category===cat.slug; }).sort(vdocSortCmp);
+    var worst=null, wu=-1;
+    for(var r=0;r<rows.length;r++){ var u=vdocUrgency(rows[r]); if(u>wu){ wu=u; worst=rows[r]; } }
+    var worstCls = worst ? (VDOC_STATUS_META[vdocStatus(worst)]||{}).cls : '';
+    var collapsed = !!vdocsState.collapsed[cat.slug];
+    h += '<div class="docs-cat" data-qa="docs-category-'+cat.slug+'">';
+    h += '<button class="docs-cat-head" type="button" title="'+esc(cat.sub)+'" onclick="vdocsToggleCat(\''+cat.slug+'\')">'
+      + '<span class="docs-cat-ico">'+cat.icon+'</span><span class="docs-cat-name">'+esc(cat.name)+'</span>'
+      + (rows.length && worstCls ? '<span class="docs-dot '+worstCls+'"></span>' : '')
+      + '<span class="docs-cat-n">'+rows.length+'</span><span class="docs-caret">'+(collapsed?'▸':'▾')+'</span></button>';
+    if(!collapsed && rows.length){
+      h += '<div class="docs-rows">';
+      for(var j=0;j<rows.length;j++){ h += vdocsRowHtml(rows[j]); }
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+function vdocsStatCard(label, value, sub, filter){
+  return '<button class="crew-stat docs-stat" type="button" onclick="vdocsSetFilter(\''+filter+'\')">'
+    + '<div class="crew-stat-k">'+esc(label)+'</div><div class="crew-stat-v">'+esc(String(value))+'</div>'
+    + '<div class="crew-stat-s">'+esc(sub)+'</div></button>';
+}
+function vdocsDashboardHtml(docs){
+  var exp=0, expng=0, miss=0;
+  for(var i=0;i<docs.length;i++){
+    var st = vdocStatus(docs[i]);
+    if(st==='expired') exp++;
+    else if(st==='expiring_critical'||st==='expiring_warning') expng++;
+    else if(st==='missing') miss++;
+  }
+  return '<div data-qa="docs-dashboard"><div class="crew-stats" style="margin:0 0 14px">'
+    + vdocsStatCard('Documents', docs.length, 'in the vessel vault', 'all')
+    + vdocsStatCard('Expired', exp, 'need renewal now', 'expiring')
+    + vdocsStatCard('Expiring ≤ 90 d', expng, '30 / 90-day thresholds', 'expiring')
+    + vdocsStatCard('Missing', miss, 'required without a file', 'missing')
+    + '</div>'
+    + '<div class="apps-note"><b>Vessel vault</b> — select a document on the left to edit it. '
+    + 'All records are stored in this vessel vault; nothing leaves the vessel.</div></div>';
+}
+function vdocsFieldInput(d, field, label, type, qa){
+  return '<div class="docs-field"><label class="set-lbl">'+esc(label)+'</label>'
+    + '<input class="set-inp" data-qa="docs-field-'+(qa||field)+'" type="'+(type||'text')+'" value="'+esc(d[field]||'')+'" '
+    + 'onchange="vdocsField(\''+esc(d.id)+'\',\''+field+'\',this.value)"></div>';
+}
+function vdocsDetailHtml(d){
+  var h = '<div class="docs-detail-card" data-qa="docs-detail">';
+  h += '<div class="docs-det-head">'
+    + '<input class="docs-title-inp" data-qa="docs-field-title" value="'+esc(d.title||'')+'" onchange="vdocsField(\''+esc(d.id)+'\',\'title\',this.value)">'
+    + '<span id="docs-badge-wrap">'+vdocsBadgeHtml(d)+'</span></div>';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">'
+    + vdocsKindBadgeHtml(d.kind)
+    + (d.regulatory_basis ? '<span class="docs-reg-chip">'+esc(d.regulatory_basis)+'</span>' : '')
+    + '<span class="docs-days">'+esc(vdocsDaysText(d))+'</span></div>';
+  h += '<div class="docs-fields">';
+  h += vdocsFieldInput(d,'doc_number','Document No.');
+  h += vdocsFieldInput(d,'issued_by','Issued by');
+  h += vdocsFieldInput(d,'valid_from','Issue date','date');
+  h += vdocsFieldInput(d,'valid_to','Expiry date','date');
+  var copts='';
+  for(var i=0;i<VDOC_CATEGORIES.length;i++){ var c=VDOC_CATEGORIES[i];
+    copts += '<option value="'+c.slug+'"'+(d.category===c.slug?' selected':'')+'>'+esc(c.name)+'</option>'; }
+  h += '<div class="docs-field"><label class="set-lbl">Category</label>'
+    + '<select class="set-inp" data-qa="docs-field-category" onchange="vdocsField(\''+esc(d.id)+'\',\'category\',this.value)">'+copts+'</select></div>';
+  var kinds=['required','optional','custom'], kopts='';
+  for(var k=0;k<kinds.length;k++){ kopts += '<option value="'+kinds[k]+'"'+(d.kind===kinds[k]?' selected':'')+'>'+kinds[k]+'</option>'; }
+  h += '<div class="docs-field"><label class="set-lbl">Kind</label>'
+    + '<select class="set-inp" data-qa="docs-field-kind" onchange="vdocsField(\''+esc(d.id)+'\',\'kind\',this.value)">'+kopts+'</select></div>';
+  h += vdocsFieldInput(d,'regulatory_basis','Regulatory basis (SOLAS / MARPOL / ISM…)');
+  h += '<label class="docs-perm-chk"><input type="checkbox" data-qa="docs-field-permanent"'+(d.is_permanent?' checked':'')
+    + ' onchange="vdocsField(\''+esc(d.id)+'\',\'is_permanent\',this.checked)"> Permanent — no expiry</label>';
+  h += '</div>';
+  if(d.file){
+    h += '<div class="docs-file" data-qa="docs-preview"><div class="docs-file-ico">📎</div><div class="docs-file-meta">'
+      + '<div class="docs-file-name">'+esc(d.file.file_name||'')+'</div>'
+      + '<div class="docs-file-sub">'+esc(vdocsFmtSize(d.file.file_size))
+      + (d.file.content_type ? ' · '+esc(d.file.content_type) : '')
+      + (d.attached_at ? ' · attached '+esc(String(d.attached_at).slice(0,10)) : '')+'</div>'
+      + '<div class="docs-file-note">v0 keeps this file record (metadata) in the vessel vault; the file bytes are not copied yet. '
+      + 'Durable copy-into-vault file storage arrives with the vessel-vault storage slice.</div></div>'
+      + '<button class="btn btn-outline btn-sm" type="button" data-qa="docs-replace" onclick="vdocsAttach(true)">Replace…</button></div>';
+  } else {
+    h += '<div class="docs-drop" data-qa="docs-drop-zone" ondragover="vdocsDragOver(event)" ondragleave="vdocsDragLeave(event)" ondrop="vdocsDrop(event)">'
+      + 'Drag a file here, or <button class="btn btn-accent btn-sm" type="button" data-qa="docs-attach" onclick="vdocsAttach(false)">Attach file</button>'
+      + '<div class="docs-file-sub" style="margin-top:8px">PDF · JPG · PNG · DOC · DOCX — the record is stored in this vessel vault.</div></div>';
+  }
+  h += '<input type="file" id="docs-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="vdocsFileChosen(this.files)">';
+  h += '<div class="docs-field" style="margin-top:14px"><label class="set-lbl">Notes</label>'
+    + '<textarea class="set-inp" rows="3" data-qa="docs-field-notes" onchange="vdocsField(\''+esc(d.id)+'\',\'notes\',this.value)">'+esc(d.notes||'')+'</textarea></div>';
+  h += '<div class="docs-autosave" id="docs-autosave" data-qa="docs-autosave">Changes save automatically</div>';
+  h += '<div class="docs-danger"><button class="btn btn-outline btn-sm" type="button" onclick="vdocsDelete(\''+esc(d.id)+'\')">Delete document</button>'
+    + (d.kind==='required' ? '<div class="set-hint" style="margin-top:6px">Required documents cannot be deleted — change the kind first.</div>' : '')
+    + '</div>';
+  h += '</div>';
+  return h;
+}
+function vdocsAddOverlayHtml(){
+  var copts='';
+  for(var i=0;i<VDOC_CATEGORIES.length;i++){ var c=VDOC_CATEGORIES[i]; copts += '<option value="'+c.slug+'">'+esc(c.name)+'</option>'; }
+  return '<div class="docs-add-ov" data-qa="docs-add-overlay" onclick="if(event.target===this)vdocsCloseAdd()">'
+    + '<div class="docs-add-card"><div class="apps-detail-name" style="font-size:18px">Add document</div>'
+    + '<label class="set-lbl">Title</label><input id="docs-add-title" class="set-inp" placeholder="e.g. Safety Management Certificate">'
+    + '<label class="set-lbl">Category</label><select id="docs-add-cat" class="set-inp">'+copts+'</select>'
+    + '<label class="set-lbl">Kind</label><select id="docs-add-kind" class="set-inp">'
+    + '<option value="custom" selected>Custom</option><option value="required">Required</option><option value="optional">Optional</option></select>'
+    + '<div style="margin-top:14px;display:flex;gap:8px">'
+    + '<button class="btn btn-accent" type="button" onclick="vdocsCreate()">Create</button>'
+    + '<button class="btn btn-outline" type="button" onclick="vdocsCloseAdd()">Cancel</button></div>'
+    + '<div class="set-hint" style="margin-top:10px">The record is stored in this vessel vault. Attach the file and validity dates in the document card.</div>'
+    + '</div></div>';
+}
+function renderVesselDocs(){
+  vdocsState.err = null;
+  var docs = [];
+  try { vdocsMaybeSeedDemo(); docs = vdocsDocs(); }
+  catch(e){ vdocsState.err = ''+((e&&e.message)||e); }
+  var offline = (typeof navigator!=='undefined' && navigator.onLine===false);
+  var h = '<div class="docs-screen">';
+  h += '<div class="apps-head"><div class="apps-head-title">Vessel Documents</div>'
+    + '<div class="apps-head-sub">The ship’s own document vault — certificates, manuals, SMS and voyage papers, '
+    + 'stored in this vessel vault on this computer. Nothing leaves the vessel.</div>';
+  var pills = '';
+  if(vdocsIsDemo()) pills += '<span class="set-pill">Demo data · example documents</span>';
+  if(offline) pills += '<span class="docs-offline" data-qa="docs-offline">📡 Offline — the vessel vault works fully offline</span>';
+  if(pills) h += '<div class="docs-pills">'+pills+'</div>';
+  h += '</div>';
+  if(vdocsState.err){
+    h += '<div class="set-card" data-qa="docs-error" style="margin-top:16px"><div class="set-pill warn">Vault data could not be read</div>'
+      + '<div class="set-hint" style="margin-top:8px">The vessel vault record (<code>skipi-onboard-vdocs</code>) is unreadable: '+esc(vdocsState.err)+'. '
+      + 'Fail-closed: nothing is guessed and edits are blocked so the stored record is not overwritten. The raw record stays untouched for recovery.</div>'
+      + '<button class="btn btn-outline btn-sm" type="button" style="margin-top:10px" onclick="renderVesselDocs()">Retry</button></div>';
+    h += '</div>';
+    setContent(h);
+    return;
+  }
+  if(!docs.length){
+    h += '<div class="crew-empty" data-qa="docs-empty" style="margin-top:16px"><div class="crew-empty-icon">📜</div>'
+      + '<div class="crew-empty-t">No vessel documents yet</div>'
+      + '<div class="crew-empty-s">Start the vessel vault: add the ship’s certificates, manuals, SMS papers and voyage documents. '
+      + 'Records are stored in this vessel vault — nothing leaves the vessel, and the vault works fully offline.</div>'
+      + '<button class="pair-cta" type="button" data-qa="docs-add" onclick="vdocsOpenAdd()">＋ Add document</button></div>';
+  } else {
+    h += '<div class="docs-wrap">';
+    h += '<div class="docs-left"><div class="docs-left-head">'
+      + '<div class="docs-search" data-qa="docs-search"><span class="apps-search-ico">🔍</span>'
+      + '<input id="docs-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="Search documents…" '
+      + 'value="'+esc(vdocsState.q||'')+'" oninput="vdocsSearch(this.value)"></div>'
+      + '<button class="docs-add-btn" type="button" data-qa="docs-add" onclick="vdocsOpenAdd()">＋ Add</button></div>'
+      + '<div id="docs-left-body">'+vdocsLeftBodyHtml(docs)+'</div></div>';
+    var sel = vdocsState.selectedId ? vdocsFind(docs, vdocsState.selectedId) : null;
+    h += '<div class="docs-right" id="docs-right">'+(sel ? vdocsDetailHtml(sel) : vdocsDashboardHtml(docs))+'</div>';
+    h += '</div>';
+  }
+  if(vdocsState.addOpen) h += vdocsAddOverlayHtml();
   h += '</div>';
   setContent(h);
 }
+
+// ---- interactions ----
+function vdocsSelect(id){ vdocsState.selectedId = id; renderVesselDocs(); }
+function vdocsSetFilter(f){ vdocsState.filter = f; renderVesselDocs(); }
+function vdocsSearch(v){
+  vdocsState.q = v||'';
+  var el = document.getElementById('docs-left-body');
+  if(!el) return;
+  try { el.innerHTML = vdocsLeftBodyHtml(vdocsDocs()); } catch(e){ renderVesselDocs(); }
+}
+function vdocsToggleCat(slug){
+  vdocsState.collapsed[slug] = !vdocsState.collapsed[slug];
+  var el = document.getElementById('docs-left-body');
+  if(el){ try { el.innerHTML = vdocsLeftBodyHtml(vdocsDocs()); } catch(e){} }
+}
+function vdocsOpenAdd(){
+  vdocsState.addOpen = true;
+  renderVesselDocs();
+  setTimeout(function(){ var el=document.getElementById('docs-add-title'); if(el) el.focus(); }, 0);
+}
+function vdocsCloseAdd(){ vdocsState.addOpen = false; renderVesselDocs(); }
+function vdocsCreate(){
+  var g = function(id){ var el=document.getElementById(id); return el ? String(el.value||'').trim() : ''; };
+  var title = g('docs-add-title');
+  if(!title){ showToast('Enter a document title'); return; }
+  var cat = g('docs-add-cat')||'certificates', kind = g('docs-add-kind')||'custom';
+  if(!vdocsCatBySlug(cat)) cat = 'certificates';
+  if(['required','optional','custom'].indexOf(kind)<0) kind = 'custom';
+  var now = new Date().toISOString();
+  var d = { id:'doc_'+randHex(6), title:title, category:cat, kind:kind, template_id:null,
+    regulatory_basis:'', doc_number:'', issued_by:'', notes:'',
+    file:null, has_expiry:false, is_permanent:false, valid_from:'', valid_to:'',
+    provenance:{ source:'owner' }, fixture: vdocsIsDemo(),
+    created_at:now, updated_at:now };
+  if(!vdocsMutate(function(v){ v.docs.push(d); })) return;
+  vdocsState.addOpen = false;
+  vdocsState.selectedId = d.id;
+  renderVesselDocs();
+  showToast('Document added to the vessel vault');
+}
+function vdocsField(id, field, value){
+  var ALLOWED = ['title','category','kind','doc_number','issued_by','valid_from','valid_to','notes','regulatory_basis','is_permanent'];
+  if(ALLOWED.indexOf(field)<0) return;
+  if(!vdocsMutate(function(v){
+    var d = vdocsFind(v.docs, id); if(!d) return;
+    if(field==='is_permanent') d.is_permanent = !!value;
+    else d[field] = String(value==null?'':value);
+    d.has_expiry = !!d.valid_to && !d.is_permanent;
+    d.updated_at = new Date().toISOString();
+  })) return;
+  var structural = (field==='category'||field==='kind'||field==='valid_to'||field==='valid_from'||field==='is_permanent'||field==='title'||field==='regulatory_basis');
+  if(structural){ renderVesselDocs(); }
+  else {
+    var lb = document.getElementById('docs-left-body');
+    if(lb){ try { lb.innerHTML = vdocsLeftBodyHtml(vdocsDocs()); } catch(e){} }
+    var bw = document.getElementById('docs-badge-wrap'), d2 = vdocsById(id);
+    if(bw && d2) bw.innerHTML = vdocsBadgeHtml(d2);
+  }
+  vdocsAutosaveFlash();
+}
+function vdocsAutosaveFlash(){
+  var el = document.getElementById('docs-autosave'); if(!el) return;
+  el.textContent = 'Saving…';
+  clearTimeout(vdocsAutosaveFlash._t1); clearTimeout(vdocsAutosaveFlash._t2);
+  vdocsAutosaveFlash._t1 = setTimeout(function(){ var e2=document.getElementById('docs-autosave'); if(e2) e2.textContent='Saved ✓'; }, 350);
+  vdocsAutosaveFlash._t2 = setTimeout(function(){ var e2=document.getElementById('docs-autosave'); if(e2) e2.textContent='Changes save automatically'; }, 2600);
+}
+function vdocsAcceptFile(f){ return /\.(pdf|jpe?g|png|docx?)$/i.test(String((f && f.name)||'')); }
+function vdocsAttach(replace){
+  var inp = document.getElementById('docs-file-input');
+  if(inp){ inp.value=''; inp.click(); }
+}
+function vdocsFileChosen(files){
+  if(!files || !files.length || !vdocsState.selectedId) return;
+  var f = files[0];
+  if(!vdocsAcceptFile(f)){ showToast('Supported: PDF, JPG, PNG, DOC, DOCX'); return; }
+  vdocsApplyFileMeta(vdocsState.selectedId, { file_name:f.name, file_size:f.size||0, content_type:f.type||'' });
+}
+function vdocsApplyFileMeta(id, meta){
+  if(!meta || !meta.file_name) return;
+  if(!vdocsMutate(function(v){
+    var d = vdocsFind(v.docs, id); if(!d) return;
+    d.file = { file_name:String(meta.file_name), file_size:Number(meta.file_size)||0, content_type:String(meta.content_type||'') };
+    d.attached_at = new Date().toISOString();
+    d.updated_at = d.attached_at;
+  })) return;
+  renderVesselDocs();
+  vdocsAutosaveFlash();
+  showToast('File record saved to the vessel vault');
+}
+function vdocsDragOver(ev){ ev.preventDefault(); if(ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.add('over'); }
+function vdocsDragLeave(ev){ if(ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.remove('over'); }
+function vdocsDrop(ev){
+  ev.preventDefault(); ev.stopPropagation();
+  if(ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.remove('over');
+  var fs = ev.dataTransfer && ev.dataTransfer.files;
+  vdocsFileChosen(fs);
+}
+function vdocsDelete(id){
+  var d = vdocsById(id); if(!d) return;
+  // Standard §2.3 guard: an active required document cannot be deleted.
+  if(d.kind==='required'){ showToast('Required document cannot be deleted — change its kind first'); return; }
+  if(!window.confirm('Delete "'+(d.title||'document')+'" from the vessel vault?')) return;
+  if(!vdocsMutate(function(v){ v.docs = v.docs.filter(function(x){ return x.id!==id; }); })) return;
+  if(vdocsState.selectedId===id) vdocsState.selectedId = null;
+  renderVesselDocs();
+  showToast('Document deleted');
+}
+// Vault-owned docs work fully offline; the offline pill is informational only.
+function vdocsOnlineFlip(){ if(currentModule==='vdocs') renderVesselDocs(); }
+if(typeof window!=='undefined' && window.addEventListener){
+  window.addEventListener('online', vdocsOnlineFlip);
+  window.addEventListener('offline', vdocsOnlineFlip);
+}
+// =========================================================================
+// VDOCS NO-NETWORK BOUNDARY END
+// =========================================================================
 
 // ===================== Settings → Экипаж (Crew) =====================
 // A Settings surface for LINKING SEAFARERS to this vessel — distinct from device

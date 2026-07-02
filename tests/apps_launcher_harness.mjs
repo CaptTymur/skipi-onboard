@@ -1,4 +1,5 @@
-// Headless harness for the Apps Compact Plugin Launcher v2.
+// Headless harness for the Apps Compact Plugin Launcher v2 + the Vessel
+// Documents v0 vault surface.
 //
 // Loads the REAL inline <script> from dist/index.html, stubs the browser globals,
 // and exercises the launcher surface + manage view + states. Asserts: QA hooks
@@ -6,6 +7,11 @@
 // plugin-open-<id>, plugin-empty-state/offline-state/error-state, nav module
 // hooks), installed-only icon tiles, search filtering, gear -> manage view,
 // and that the launcher is the default primary Apps surface.
+//
+// Vessel Documents v0 (Docs Module Standard v1, On Board adapter): static
+// no-network boundary check, docs-* QA hooks, classify thresholds 30/90,
+// create/attach/filter/search flows, required-delete guard, fail-closed vault
+// read, demo-fixture scoping.
 //
 //   node tests/apps_launcher_harness.mjs
 
@@ -32,7 +38,8 @@ globalThis.window = globalThis;
 globalThis.__ONBOARD_NO_BOOT__ = true;
 globalThis.fetch = async () => ({ status: 599, ok: false, async json() { return {}; }, async text() { return ''; } });
 
-const EXPORTS = ['appsState', 'appsLauncherHtml', 'appsLauncherBodyHtml', 'appsFilter', 'appsSetView', 'installedPluginIds', 'appsShortLabel', 'appsListHtml', 'renderApps', 'catalogPluginIds', 'SkipiPlugins', 'BUNDLED_PLUGIN_DIRS', 'pluginIntegrity'];
+const EXPORTS = ['appsState', 'appsLauncherHtml', 'appsLauncherBodyHtml', 'appsFilter', 'appsSetView', 'installedPluginIds', 'appsShortLabel', 'appsListHtml', 'renderApps', 'catalogPluginIds', 'SkipiPlugins', 'BUNDLED_PLUGIN_DIRS', 'pluginIntegrity',
+  'vdocsState', 'renderVesselDocs', 'vdocsDocs', 'vdocsOpenAdd', 'vdocsCreate', 'vdocsSelect', 'vdocsSetFilter', 'vdocsSearch', 'vdocsField', 'vdocsApplyFileMeta', 'vdocsDelete', 'vdocsFilterCounts', 'vdocStatus', 'vdocValidity', 'VDOC_CATEGORIES'];
 let M;
 try { M = new Function(script + '\nreturn {' + EXPORTS.join(',') + '};')(); }
 catch (e) { console.error('load failed:', e); process.exit(1); }
@@ -118,6 +125,152 @@ try {
 } catch (e) { /* navigator not settable here */ }
 if (!offlineTested) console.log('  ~ offline-state branch present in source: ' + (script.includes('plugin-offline-state') ? 'yes (runtime cannot toggle navigator)' : 'NO'));
 ok(script.includes('plugin-offline-state'), 'plugin-offline-state hook reserved in source');
+
+// ===================== Vessel Documents v0 (vessel-owned local vault) =====================
+globalThis.confirm = () => true;
+const scr = () => els.get('scr-content').innerHTML;
+const isoIn = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const vdocsReset = () => {
+  store.delete('skipi-onboard-vdocs'); store.delete('skipi-onboard-crew-config');
+  M.vdocsState.selectedId = null; M.vdocsState.filter = 'all'; M.vdocsState.q = ''; M.vdocsState.addOpen = false; M.vdocsState.err = null;
+};
+
+section('vdocs — static no-network boundary + source hooks');
+const vb0 = script.indexOf('VDOCS NO-NETWORK BOUNDARY START');
+const vb1 = script.indexOf('VDOCS NO-NETWORK BOUNDARY END');
+ok(vb0 >= 0 && vb1 > vb0, 'no-network boundary markers present');
+const vregion = script.slice(vb0, vb1);
+ok(!/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|crewFetch|vesselFetch|hostReportsFetch|crewApiUrl|inboxApiBase/.test(vregion),
+  'no network primitives or HTTP helpers inside the vdocs module');
+['docs-tree', 'docs-search', 'docs-detail', 'docs-status-badge', 'docs-add', 'docs-add-overlay', 'docs-attach',
+  'docs-drop-zone', 'docs-preview', 'docs-replace', 'docs-empty', 'docs-error', 'docs-dashboard', 'docs-offline',
+  'docs-field-permanent', 'docs-field-title', 'docs-field-category', 'docs-field-kind', 'docs-field-notes', 'docs-autosave']
+  .forEach((h) => ok(vregion.includes('data-qa="' + h + '"'), 'source hook ' + h));
+ok(vregion.includes('data-qa="docs-filter-'), 'docs-filter-<id> hook generator');
+ok(vregion.includes('data-qa="docs-category-'), 'docs-category-<slug> hook generator');
+ok(vregion.includes('data-qa="docs-item-'), 'docs-item-<docId> hook generator');
+ok(vregion.includes('data-qa="docs-field-'), 'docs-field-<name> hook generator');
+
+section('vdocs — classify thresholds (30/90) + presence-derived states');
+const fdoc = (o) => Object.assign({ kind: 'custom', file: { file_name: 'x.pdf' }, is_permanent: false, valid_to: '' }, o);
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(-1) })) === 'expired', 'valid_to yesterday -> expired');
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(0) })) === 'expiring_critical', 'valid_to today -> expiring_critical');
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(29) })) === 'expiring_critical', '+29d -> expiring_critical');
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(30) })) === 'expiring_warning', '+30d -> expiring_warning');
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(89) })) === 'expiring_warning', '+89d -> expiring_warning');
+ok(M.vdocStatus(fdoc({ valid_to: isoIn(90) })) === 'valid', '+90d -> valid');
+ok(M.vdocStatus(fdoc({ is_permanent: true, valid_to: isoIn(5) })) === 'permanent', 'permanent wins over expiry');
+ok(M.vdocStatus(fdoc({ valid_to: '' })) === 'no_expiry', 'no valid_to -> no_expiry');
+ok(M.vdocStatus(fdoc({ file: null, kind: 'required' })) === 'missing', 'required without file -> missing');
+ok(M.vdocStatus(fdoc({ file: null, kind: 'custom' })) === 'no_file', 'non-required without file -> no_file');
+
+section('vdocs — first-run empty state + ownership copy');
+vdocsReset();
+M.renderVesselDocs();
+let vh = scr();
+ok(vh.includes('data-qa="docs-empty"'), 'first-run docs-empty state');
+ok(/nothing leaves the vessel/i.test(vh), 'ownership copy: nothing leaves the vessel');
+ok(/stored in this vessel vault/i.test(vh), 'ownership copy: stored in this vessel vault');
+ok(vh.includes('data-qa="docs-add"'), 'docs-add CTA on empty state');
+ok(!vh.includes('data-qa="docs-error"'), 'no error state on healthy empty vault');
+
+section('vdocs — add overlay -> create -> tree/detail hooks');
+M.vdocsOpenAdd();
+ok(scr().includes('data-qa="docs-add-overlay"'), 'add overlay hook rendered');
+elFor('docs-add-title').value = 'Test Certificate';
+elFor('docs-add-cat').value = 'certificates';
+elFor('docs-add-kind').value = 'required';
+M.vdocsCreate();
+let vdocs = M.vdocsDocs();
+ok(vdocs.length === 1 && vdocs[0].title === 'Test Certificate', 'document created in the vault');
+const did = vdocs[0].id;
+ok(vdocs[0].kind === 'required' && vdocs[0].category === 'certificates', 'kind/category honored from the form');
+ok(vdocs[0].provenance && vdocs[0].provenance.source === 'owner', 'provenance source=owner');
+vh = scr();
+ok(vh.includes('data-qa="docs-tree"'), 'docs-tree rendered');
+M.VDOC_CATEGORIES.forEach((c) => ok(vh.includes('data-qa="docs-category-' + c.slug + '"'), 'category folder ' + c.slug));
+ok(vh.includes('data-qa="docs-item-' + did + '"'), 'docs-item-<docId> row');
+ok(vh.includes('data-qa="docs-detail"'), 'detail opens for the new document');
+['doc_number', 'issued_by', 'valid_from', 'valid_to'].forEach((f) => ok(vh.includes('data-qa="docs-field-' + f + '"'), 'field hook ' + f));
+ok(vh.includes('data-qa="docs-field-permanent"'), 'field hook permanent');
+ok(vh.includes('data-qa="docs-status-badge"') && vh.includes('Missing'), 'required without file shows Missing badge');
+ok(vh.includes('data-qa="docs-drop-zone"') && vh.includes('data-qa="docs-attach"'), 'attach + drop-zone offered before a file exists');
+ok(vh.includes('data-qa="docs-autosave"'), 'autosave indicator present');
+
+section('vdocs — filters with live counts + honest filter/search empty');
+let counts = M.vdocsFilterCounts(M.vdocsDocs(), '');
+ok(counts.all === 1 && counts.required === 1 && counts.missing === 1 && counts.uploaded === 0, 'live counts (all/required/missing/uploaded)');
+M.vdocsSetFilter('uploaded');
+vh = scr();
+ok(vh.includes('data-qa="docs-empty"') && vh.includes('No documents match'), 'honest empty state for a filter with no matches');
+M.vdocsSetFilter('missing');
+ok(scr().includes('data-qa="docs-item-' + did + '"'), 'missing filter keeps the missing required doc');
+M.vdocsSetFilter('all');
+M.vdocsSearch('zzzz-no-match');
+ok(els.get('docs-left-body').innerHTML.includes('data-qa="docs-empty"'), 'honest empty state for a search with no matches');
+M.vdocsSearch('test cert');
+ok(els.get('docs-left-body').innerHTML.includes('data-qa="docs-item-' + did + '"'), 'search finds by title');
+M.vdocsSearch('');
+
+section('vdocs — attach file metadata -> preview/replace + validity');
+M.vdocsApplyFileMeta(did, { file_name: 'cert.pdf', file_size: 23456, content_type: 'application/pdf' });
+vdocs = M.vdocsDocs();
+ok(vdocs[0].file && vdocs[0].file.file_name === 'cert.pdf', 'file metadata stored in the vault record');
+vh = scr();
+ok(vh.includes('data-qa="docs-preview"') && vh.includes('cert.pdf'), 'preview card shows the file record');
+ok(vh.includes('data-qa="docs-replace"'), 'replace action available');
+ok(/file bytes are not copied yet/i.test(vh), 'honest metadata-only copy in the file card');
+ok(M.vdocStatus(vdocs[0]) === 'no_expiry', 'attached without expiry -> no_expiry');
+M.vdocsField(did, 'valid_to', isoIn(10));
+ok(M.vdocStatus(M.vdocsDocs()[0]) === 'expiring_critical', 'expiry set via autosave field -> expiring_critical');
+ok(scr().includes('Expiring soon'), 'badge label follows the 30-day threshold');
+counts = M.vdocsFilterCounts(M.vdocsDocs(), '');
+ok(counts.uploaded === 1 && counts.expiring === 1 && counts.missing === 0, 'counts follow attach + expiry');
+
+section('vdocs — required delete guard, then delete as custom');
+M.vdocsDelete(did);
+ok(M.vdocsDocs().length === 1, 'required document cannot be deleted');
+M.vdocsField(did, 'kind', 'custom');
+M.vdocsDelete(did);
+ok(M.vdocsDocs().length === 0, 'custom document deletes after confirm');
+
+section('vdocs — fail-closed on corrupt vault record');
+store.set('skipi-onboard-vdocs', '{corrupt');
+M.renderVesselDocs();
+vh = scr();
+ok(vh.includes('data-qa="docs-error"'), 'corrupt vault -> docs-error state');
+ok(!vh.includes('data-qa="docs-empty"'), 'corrupt vault is NOT shown as a healthy empty vault');
+let threw = false;
+try { M.vdocsField('nope', 'title', 'x'); } catch (e) { threw = true; }
+ok(!threw, 'edits on a corrupt vault fail closed without throwing');
+ok(store.get('skipi-onboard-vdocs') === '{corrupt', 'corrupt raw record preserved (never overwritten)');
+
+section('vdocs — demo fixtures scoped to demo mode');
+vdocsReset();
+store.set('skipi-onboard-crew-config', JSON.stringify({ vessel_mode: 'demo' }));
+M.renderVesselDocs();
+ok(M.vdocsDocs().length >= 6, 'demo vessel seeds example documents');
+ok(scr().includes('Demo data'), 'demo pill shown');
+ok(M.vdocsDocs().every((d) => d.fixture === true), 'all seeded docs flagged fixture');
+store.set('skipi-onboard-crew-config', '{}');
+ok(M.vdocsDocs().length === 0, 'fixtures hidden outside demo mode (no leak to a real vessel)');
+vdocsReset();
+
+section('vdocs — offline pill (informational; vault works offline)');
+let vOfflineTested = false;
+try {
+  Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true, writable: true });
+  if (globalThis.navigator && globalThis.navigator.onLine === false) {
+    vOfflineTested = true;
+    M.renderVesselDocs();
+    ok(scr().includes('data-qa="docs-offline"'), 'offline pill shown when navigator is offline');
+    Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, configurable: true, writable: true });
+    M.renderVesselDocs();
+    ok(!scr().includes('data-qa="docs-offline"'), 'no offline pill when online');
+  }
+} catch (e) { /* navigator not settable here */ }
+if (!vOfflineTested) ok(vregion.includes('data-qa="docs-offline"'), 'offline pill reserved in source (runtime cannot toggle navigator)');
+vdocsReset();
 
 console.log('\n' + (fail === 0 ? 'ALL GREEN' : 'FAILURES') + ': ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);
