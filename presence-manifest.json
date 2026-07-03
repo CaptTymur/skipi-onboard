@@ -1,0 +1,97 @@
+{
+  "schema_version": "skipi.presence-manifest.v1",
+  "home": "onboard",
+  "artifact": "dist/index.html",
+  "notes": [
+    "On Board is desktop-only: modules have desktop_navigation only (no mobile surface).",
+    "Route driver is showModule(route) for module tabs and showSettings() for the settings gear.",
+    "surface_markers / css_tokens are On Board extensions consumed by tests/onboard_presence_contract_harness.mjs: surface_markers must appear in the rendered surface after navigation; css_tokens are scanned against stylesheet rules for hiding declarations (display:none, visibility:hidden, opacity:0, zero-size).",
+    "Allowed exception: selectors scoped under body.launching may hide the modules bar — that is the pre-shell first-run launch screen, removed on entering the shell."
+  ],
+  "required_modules": [
+    {
+      "id": "crew",
+      "name": "Crew",
+      "desktop_navigation": {
+        "route": "crew",
+        "nav_selector": "[data-qa=\"onboard-module-crew\"]",
+        "render_function": "renderCrew"
+      },
+      "surface_markers": [
+        "No linked crew yet",
+        "Invite crew member"
+      ],
+      "css_tokens": [
+        "onboard-module-crew",
+        "data-mod=\"crew\""
+      ]
+    },
+    {
+      "id": "apps",
+      "name": "Apps",
+      "desktop_navigation": {
+        "route": "apps",
+        "nav_selector": "[data-qa=\"onboard-module-apps\"]",
+        "render_function": "renderApps"
+      },
+      "surface_markers": [
+        "data-qa=\"apps-search-input\"",
+        "data-qa=\"plugins-settings-open\""
+      ],
+      "css_tokens": [
+        "onboard-module-apps",
+        "data-mod=\"apps\""
+      ]
+    },
+    {
+      "id": "my-vessel",
+      "name": "My Vessel",
+      "desktop_navigation": {
+        "route": "myvessel",
+        "nav_selector": "[data-qa=\"onboard-module-myvessel\"]",
+        "render_function": "renderMyVessel"
+      },
+      "surface_markers": [
+        "My Vessel",
+        "Судно не выбрано"
+      ],
+      "css_tokens": [
+        "onboard-module-myvessel",
+        "data-mod=\"myvessel\""
+      ]
+    },
+    {
+      "id": "vessel-documents",
+      "name": "Vessel Documents",
+      "desktop_navigation": {
+        "route": "vdocs",
+        "nav_selector": "[data-qa=\"onboard-module-vdocs\"]",
+        "render_function": "renderVesselDocs"
+      },
+      "surface_markers": [
+        "data-qa=\"docs-empty\"",
+        "Vessel Documents"
+      ],
+      "css_tokens": [
+        "onboard-module-vdocs",
+        "data-mod=\"vdocs\""
+      ]
+    },
+    {
+      "id": "settings",
+      "name": "Settings",
+      "desktop_navigation": {
+        "route": "settings",
+        "nav_selector": "#mb-gear",
+        "render_function": "renderSettings"
+      },
+      "surface_markers": [
+        "data-qa=\"onboard-settings-vessel\"",
+        "data-qa=\"onboard-settings-devices\""
+      ],
+      "css_tokens": [
+        "mb-gear"
+      ]
+    }
+  ]
+}
