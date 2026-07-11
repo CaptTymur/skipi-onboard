@@ -1,6 +1,6 @@
 [package]
 name = "skipi-onboard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Skipi On Board - United Seafarers. Work-completion photo reports from the vessel"
 authors = ["Tymur Rudov"]
 license = "Proprietary"
