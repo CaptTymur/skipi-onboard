@@ -607,83 +607,9 @@ var SKIPI_APP_CATEGORIES = [
 // host labels for the "lives in" chips
 var HOST_LABELS = { seafarer:'Seafarer', crewing:'Crewing', broker:'Broker', onboard:'On Board', management:'Management' };
 
-// Local/static manifest-like registry. Every tile is a seed: it has a clear
-// detail screen explaining its future onboard role, but no runtime yet.
-var SKIPI_APPS = [
-  {
-    id:'app.skipi.applications.watch-schedule',
-    name:'Watch Schedule', category:'onboard', icon:'⏰', status:'coming_soon',
-    hosts:['onboard','seafarer','management'],
-    short:'Duty rotation and watch schedule from the ship’s administration.',
-    description:'The current watch rotation and duty schedule, published by the ship’s administration. Once a seafarer pairs their Skipi Seafarer with this On Board node by QR, the schedule appears in their device read-only — no more photographing the mess-room printout.',
-    privacy_note:'Read-only from the ship. The seafarer’s personal vault is never shared back to the vessel.'
-  },
-  {
-    id:'app.skipi.applications.announcements',
-    name:'Announcements', category:'onboard', icon:'📢', status:'coming_soon',
-    hosts:['onboard','seafarer'],
-    short:'Notices and instructions from the master, chief officer or office.',
-    description:'Onboard notices and instructions from the master, chief officer, company or onboard administration — drills, port calls, safety notices, working instructions. Delivered to paired crew devices so nothing important is lost on a notice board.',
-    privacy_note:'One-way from ship administration to the crew. No personal data leaves the seafarer’s device.'
-  },
-  {
-    id:'app.skipi.applications.checklists',
-    name:'Checklists', category:'onboard', icon:'✅', status:'coming_soon',
-    hosts:['onboard','seafarer','management'],
-    short:'Onboard checklists with crew confirmations.',
-    description:'Operational and safety checklists for the vessel. The crew confirms completion on their device; confirmations flow back as structured signals to the Skipi core and, where allowed, to shore management — an auditable trail without paper.',
-    privacy_note:'Only the checklist workflow is shared — not the seafarer’s documents or location.'
-  },
-  {
-    id:'app.skipi.applications.familiarization',
-    name:'Familiarization', category:'onboard', icon:'🧭', status:'coming_soon',
-    hosts:['onboard','seafarer'],
-    short:'Joining and familiarization tasks for new crew.',
-    description:'Joining instructions and familiarization tasks for newly joined crew, with confirmation when each item is completed. Turns the familiarization binder into a guided, confirmable onboarding flow tied to the specific vessel.',
-    privacy_note:'Familiarization confirmation is a scoped signal. The ship node never receives the full personal vault.'
-  },
-  {
-    id:'app.skipi.applications.photo-reports',
-    name:'Photo Reports', category:'reports', icon:'📷', status:'coming_soon',
-    hosts:['onboard','management'],
-    short:'Work-completion photo reports (before / during / after) to the office.',
-    description:'Capture work-completion reports by template — photos before/during/after, resources consumed, notes — and submit them to the office in one tap. This is the original On Board "Job Reporter" direction, returning here as a first-class onboard application alongside the shore-side Skipi Management app.',
-    privacy_note:'Reports are tied to the vessel (IMO), not to a private seafarer profile.'
-  },
-  {
-    id:'app.skipi.applications.safety-reports',
-    name:'Safety Reports', category:'reports', icon:'🦺', status:'coming_soon',
-    hosts:['onboard','seafarer','management'],
-    short:'Safety, defect and incident reports with evidence.',
-    description:'Safety, defect and incident reports — near-miss, defect, MLC-style complaint — with photo evidence and structured fields. Routed as privacy-preserving signals into the Skipi core so that ten weak signals can together reveal a real problem, supporting the United Seafarers manifest.',
-    privacy_note:'The seafarer chooses what to send. Identity is privacy-preserving; the ship sees only the allowed part of the workflow.'
-  },
-  {
-    id:'app.skipi.applications.bnwas',
-    name:'BNWAS / Time Anchor', category:'safety', icon:'⏱️', status:'coming_soon',
-    hosts:['seafarer','onboard','management'],
-    short:'Personal watchkeeping timer and time-anchor. Offline, no account.',
-    description:'A personal watchkeeping timer and time-anchor tool for mariners. Works fully offline with no account and no data upload. BNWAS already exists as a standalone App Store app; on the Skipi platform it will appear here as a first-party tile — open if installed, otherwise install — and later as an embedded onboard utility.',
-    safety_note:'Not certified bridge equipment. Does not replace the vessel BNWAS, lookout duties, bridge procedures or the company SMS.',
-    privacy_note:'No server, no account, no analytics, no access to documents.'
-  },
-  {
-    id:'app.skipi.applications.distance-tables',
-    name:'Distance Tables', category:'utils', icon:'📏', status:'coming_soon',
-    hosts:['onboard','seafarer','broker','management'],
-    short:'Port-to-port distances and voyage-time helper.',
-    description:'Port-to-port distances with a speed / consumption and voyage-time helper, exportable into a voyage note. A horizontal application: the same tool is useful to a broker pricing a fixture, a seafarer planning a passage and the vessel itself.',
-    privacy_note:'Pure calculation utility — no personal data, no server required.'
-  },
-  {
-    id:'app.skipi.applications.draft-survey',
-    name:'Draft Survey', category:'utils', icon:'⚖️', status:'coming_soon',
-    hosts:['onboard','seafarer','management'],
-    short:'Draft survey calculation, report and training mode.',
-    description:'Draft survey calculation with a clean report output and a training mode for cadets and junior officers. Lives on board where the survey happens, and in Seafarer / Management as a shared maritime utility.',
-    privacy_note:'Calculation and report tool — runs locally, no personal data shared.'
-  }
-];
+// Local/static registry for non-plugin application tiles. Keep empty unless a
+// reviewed, real onboard app ships; plugin artifacts live in BUNDLED_PLUGIN_DIRS.
+var SKIPI_APPS = [];
 
 // appsState.view: 'launcher' (compact installed-plugin launcher, primary) | 'manage'
 // (full catalog + install/disable/state, opened via the launcher gear). selectedId
@@ -718,14 +644,70 @@ function appsShortLabel(id){
   var m = (SkipiPlugins[id] && SkipiPlugins[id].manifest) || {};
   return m.short_name || m.name || id;
 }
+function pluginManifest(id){ return (SkipiPlugins[id] && SkipiPlugins[id].manifest) || {}; }
+function pluginVersion(id){ var m=pluginManifest(id); return m.version ? String(m.version) : ''; }
+function pluginVersionLabel(id){ var v=pluginVersion(id); return v ? 'v'+v : ''; }
+function pluginToolCount(id){
+  var m=pluginManifest(id);
+  var n=m.tool_count || m.toolCount || (id==='navigation-calculators' ? 4 : 0);
+  n=parseInt(n,10);
+  return isNaN(n) || n<=0 ? 0 : n;
+}
+function pluginToolsLabel(id){ var n=pluginToolCount(id); return n ? (n+' '+(n===1?'tool':'tools')) : ''; }
+function pluginMetaParts(id){
+  var out=[], v=pluginVersionLabel(id), t=pluginToolsLabel(id);
+  if(v) out.push(v);
+  if(t) out.push(t);
+  return out;
+}
+function pluginMetaLine(id){ return pluginMetaParts(id).join(' · '); }
+function pluginSubLine(id){
+  var m=pluginManifest(id), out=[];
+  if(m.short) out.push(m.short);
+  var meta=pluginMetaLine(id);
+  if(meta) out.push(meta);
+  return out.join(' · ');
+}
+function pluginNameMetaLine(id){
+  var meta=pluginMetaLine(id);
+  return appsShortLabel(id)+(meta?' · '+meta:'');
+}
+function semverParts(v){
+  return String(v||'').split(/[.+-]/).slice(0,3).map(function(x){ var n=parseInt(x,10); return isNaN(n)?0:n; });
+}
+function semverGt(a,b){
+  var x=semverParts(a), y=semverParts(b);
+  for(var i=0;i<3;i++){ if((x[i]||0)>(y[i]||0)) return true; if((x[i]||0)<(y[i]||0)) return false; }
+  return false;
+}
+function remoteStagingOn(){ return !!window.FEATURE_REMOTE_PLUGIN_DELIVERY; }
+function pluginCatalogVersion(id){
+  var c=window.SKIPI_PLUGIN_CATALOG||{}, p=null;
+  if(Array.isArray(c.plugins)) p=c.plugins.find(function(x){ return x && (x.slug===id || x.id===id); })||null;
+  else p=c[id]||null;
+  return p&&p.version ? String(p.version) : '';
+}
+function pluginUpdateAvailable(id){
+  if(!remoteStagingOn()) return false;
+  var latest=pluginCatalogVersion(id);
+  if(!latest) return false;
+  var installed=(pluginStore()[id]||{}).version || pluginVersion(id);
+  return semverGt(latest, installed);
+}
+function pluginUpdateActionHtml(id){
+  if(!pluginUpdateAvailable(id)) return '';
+  return '<button class="btn btn-accent" type="button" data-qa="plugin-update-'+esc(id)+'" onclick="pluginUpdateNotice(\''+esc(id)+'\')">Обновить</button>';
+}
+function pluginUpdateNotice(id){ showToast('Plugin update delivery is not enabled yet'); }
 function appsLaunchTileHtml(id){
   var m = (SkipiPlugins[id] && SkipiPlugins[id].manifest) || {};
   var name = esc(appsShortLabel(id));
   var sub = m.tagline ? '<span class="apps-launch-sub">'+esc(m.tagline)+'</span>' : '';
+  var meta = pluginMetaLine(id) ? '<span class="apps-launch-sub">'+esc(pluginMetaLine(id))+'</span>' : '';
   return '<div class="apps-launch-tile-wrap" data-qa="plugin-tile-'+esc(id)+'">'
-    + '<button class="apps-launch-tile" type="button" data-qa="plugin-open-'+esc(id)+'" title="'+name+'" onclick="pluginOpen(\''+esc(id)+'\')">'
+    + '<button class="apps-launch-tile" type="button" data-qa="plugin-open-'+esc(id)+'" title="'+esc(pluginNameMetaLine(id))+'" onclick="pluginOpen(\''+esc(id)+'\')">'
     + '<span class="apps-launch-ico">'+(m.icon||'🧩')+'</span>'
-    + '<span class="apps-launch-name">'+name+'</span>'+sub
+    + '<span class="apps-launch-name">'+name+'</span>'+sub+meta
     + '</button></div>';
 }
 // Only the tiles+states region — re-rendered on search without touching the input.
@@ -2290,8 +2272,9 @@ function fallbackCopy(txt){
 var SkipiPlugins = (window.SkipiPlugins = window.SkipiPlugins || {});
 // Reviewed bundled artifacts shipped in dist/plugins/<id>/ (loaded at boot).
 var BUNDLED_PLUGIN_DIRS = {
-  'onboard-host-check': './plugins/onboard-host-check',
-  'ship-photo-collection': './plugins/ship-photo-collection'
+  'bnwas-time-anchor': './plugins/bnwas-time-anchor',
+  'ecdis-position-reminder': './plugins/ecdis-position-reminder',
+  'navigation-calculators': './plugins/navigation-calculators'
 };
 var activePlugin = null;   // { id } while a plugin is mounted (frame-isolated)
 var pluginCssEl = null;    // (legacy) host-injected stylesheet — unused under isolation
@@ -2459,6 +2442,12 @@ function sha256Hex(text){
     return a.map(function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
   });
 }
+function checksumExpected(checks, name){
+  if(!checks) return null;
+  if(typeof checks[name] === 'string') return checks[name];
+  if(checks.files && checks.files[name] && checks.files[name].sha256) return 'sha256:' + checks.files[name].sha256;
+  return null;
+}
 function verifyChecksum(text, expected){ return sha256Hex(text).then(function(h){ return ('sha256:'+h) === expected; }); }
 
 function loadBundledPlugins(){
@@ -2475,9 +2464,9 @@ function loadOneBundledPlugin(id){
   ]).then(function(res){
     var checks=res[0], jsText=res[1], cssText=res[2], jsonText=res[3];
     return Promise.all([
-      verifyChecksum(jsText, checks['index.js']),
-      verifyChecksum(cssText, checks['index.css']),
-      verifyChecksum(jsonText, checks['plugin.json'])
+      verifyChecksum(jsText, checksumExpected(checks, 'index.js')),
+      verifyChecksum(cssText, checksumExpected(checks, 'index.css')),
+      verifyChecksum(jsonText, checksumExpected(checks, 'plugin.json'))
     ]).then(function(oks){
       if(!(oks[0] && oks[1] && oks[2])){
         pluginIntegrity[id] = { ok:false, reason:'checksum mismatch' };
@@ -2505,7 +2494,12 @@ function loadOneBundledPlugin(id){
 // Local install state (per install, not synced anywhere).
 function pluginStore(){ try { return JSON.parse(localStorage.getItem('skipi-onboard-plugins')||'{}'); } catch(e){ return {}; } }
 function pluginStoreSave(s){ try { localStorage.setItem('skipi-onboard-plugins', JSON.stringify(s)); } catch(e){} }
-function pluginInfo(id){ var s=pluginStore(); return s[id]||{ installed:false, enabled:false }; }
+function pluginInfo(id){
+  var s=pluginStore();
+  var rec=s[id]||{};
+  if(isBundledPlugin(id)) return { installed:rec.installed!==false, enabled:rec.enabled!==false };
+  return s[id]||{ installed:false, enabled:false };
+}
 function pluginUiState(id){ var i=pluginInfo(id); if(!i.installed) return 'available'; return i.enabled ? 'installed' : 'disabled'; }
 function pluginName(id){ var p=SkipiPlugins[id]; return (p && p.manifest && p.manifest.name) || id; }
 
@@ -2520,7 +2514,7 @@ function pluginTileHtml(id){
   return '<button class="apps-tile" type="button" data-qa="plugin-settings-'+esc(id)+'" onclick="appsSelect(\''+id+'\')">'
     + '<span class="apps-tile-icon">'+(m.icon||'🧩')+'</span>'
     + '<span class="apps-tile-body"><span class="apps-tile-name">'+esc(m.name||id)+devTag+'</span>'
-    + '<span class="apps-tile-sub">'+esc(m.short||'')+'</span>'+badge+'</span></button>';
+    + '<span class="apps-tile-sub">'+esc(pluginSubLine(id))+'</span>'+badge+'</span></button>';
 }
 
 function manifestPermissions(m){
@@ -2557,8 +2551,10 @@ function pluginPermsHtml(m){
 function pluginActionsHtml(id, st){
   if(st==='available') return '<button class="btn btn-accent" type="button" onclick="pluginInstall(\''+id+'\')">Install</button>';
   if(st==='installed') return '<button class="btn btn-accent" type="button" onclick="pluginOpen(\''+id+'\')">Open</button>'
+                            + pluginUpdateActionHtml(id)
                             + '<button class="btn btn-outline" type="button" onclick="pluginDisable(\''+id+'\')">Disable</button>';
   return '<button class="btn btn-accent" type="button" onclick="pluginOpen(\''+id+'\')">Open</button>'
+       + pluginUpdateActionHtml(id)
        + '<button class="btn btn-outline" type="button" onclick="pluginEnable(\''+id+'\')">Enable</button>';
 }
 
@@ -2570,7 +2566,7 @@ function pluginDetailHtml(id){
   h += '<button class="apps-back" type="button" onclick="appsBack()">← Apps</button>';
   h += '<div class="apps-detail-head"><span class="apps-tile-icon big">'+(m.icon||'🧩')+'</span>'
      + '<div><div class="apps-detail-name">'+esc(m.name||id)+'</div>'
-     + '<div class="apps-detail-cat">Plugin · v'+esc(m.version||'0')+' · '+esc(stLabel)+'</div></div></div>';
+     + '<div class="apps-detail-cat">'+esc(['Plugin'].concat(pluginMetaParts(id)).concat([stLabel]).join(' · '))+'</div></div></div>';
   if(m.description) h += '<p class="apps-detail-desc">'+esc(m.description)+'</p>';
   h += pluginPermsHtml(m);
   h += '<div class="apps-note"><b>Sandbox</b> — this plugin runs in an isolated container with a narrow host API '
@@ -2633,7 +2629,7 @@ function renderPluginHost(id){
   h += '<button class="apps-back" type="button" onclick="pluginClose()">← Apps</button>';
   h += '<div class="plugin-host-head"><span class="apps-tile-icon big">'+(m.icon||'🧩')+'</span>'
      + '<div><div class="apps-detail-name" id="plugin-title">'+esc(m.name||id)+'</div>'
-     + '<div class="apps-detail-cat">Plugin · v'+esc(m.version||'0')+' · isolated</div></div></div>';
+     + '<div class="apps-detail-cat">'+esc(['Plugin'].concat(pluginMetaParts(id)).concat(['isolated']).join(' · '))+'</div></div></div>';
   h += '<div class="plugin-mount" id="plugin-mount"></div>';
   h += '</div>';
   setContent(h);
@@ -2665,7 +2661,7 @@ function pluginClose(){
 }
 
 // =========================================================================
-// Receiver host bridge (ship-photo-collection inbox) — host-mediated access to
+// Receiver host bridge — host-mediated access to
 // the work-completion photo reports backend, which already exists:
 //   GET   /api/reports?imo=...        (the inbox)
 //   GET   /api/reports/{id}           (report + photos[])
@@ -2833,7 +2829,7 @@ function makeHostApi(pluginId){
 }
 
 // ---------- developer mode (hidden toggle: 5 clicks on the version tag) ----------
-// Dev mode reveals dev-only host fixtures (e.g. onboard-host-check) in the Apps
+// Dev mode reveals internal fixtures in the Apps
 // catalog. Off by default for normal users; no effect on real plugins.
 function isDevMode(){ try { return localStorage.getItem('skipi-onboard-dev')==='1'; } catch(e){ return false; } }
 function setDevMode(on){

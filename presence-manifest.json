@@ -2,6 +2,23 @@
   "schema_version": "skipi.presence-manifest.v1",
   "home": "onboard",
   "artifact": "dist/index.html",
+  "bundled_plugins": [
+    {
+      "slug": "bnwas-time-anchor",
+      "manifest_id": "app.skipi.plugins.bnwas-time-anchor",
+      "bundle": "dist/plugins/bnwas-time-anchor"
+    },
+    {
+      "slug": "ecdis-position-reminder",
+      "manifest_id": "app.skipi.plugins.ecdis-position-reminder",
+      "bundle": "dist/plugins/ecdis-position-reminder"
+    },
+    {
+      "slug": "navigation-calculators",
+      "manifest_id": "app.skipi.plugins.navigation-calculators",
+      "bundle": "dist/plugins/navigation-calculators"
+    }
+  ],
   "notes": [
     "On Board is desktop-only: modules have desktop_navigation only (no mobile surface).",
     "Route driver is showModule(route) for module tabs and showSettings() for the settings gear.",
