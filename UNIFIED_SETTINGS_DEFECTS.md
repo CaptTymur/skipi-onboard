@@ -54,3 +54,32 @@ getSettings/saveSettings round-trip all pass (39/39 checks in the vm harness).
    `TAURI_SIGNING_PRIVATE_KEY`. The deb and AppImage bundles are produced
    BEFORE that signing step; only the (unneeded) updater `.sig` fails. This is
    a local smoke build, not a release — no config change made.
+
+## Desktop VISUAL smoke — BLOCKED (shared X11 resource)
+
+The scripted desktop screenshot could NOT be captured. Not a build defect:
+the shared `/tmp/skipi-x11.lock` (protocol-mandated for DISPLAY=:1 grabs) was
+held continuously by a PARALLEL home-unification wave — `skipi-crewing`
+(pid 3750737) left its app running under the flock for 30+ minutes. My
+`flock -w 1200` waiter queued the full 20-minute window (22:27–22:50) and
+never got a turn. Per boundaries I did NOT touch the sibling wave's process.
+
+What IS verified for the desktop artifact (FACT, non-visual):
+- deb + AppImage bundled successfully from this worktree's dist.
+- The built `target/release/skipi-onboard` binary embeds all 5 unified assets
+  in its Tauri asset manifest: `/index.html`, `/skipi-settings.js`,
+  `/skipi-settings.css`, `/skipi-onboard-settings-host.js`, `/SETTINGS_VERSION`
+  (asset contents are brotli-compressed inside the binary; manifest keys grep
+  cleanly). Binary mtime (22:13) is after the dist edits (22:06) → build picked
+  up the changes.
+- In an earlier probe the SAME binary launched on DISPLAY=:1 and created a
+  "Skipi On Board" X11 window (webview child pid), so the app runs; only the
+  scripted gear-click + ffmpeg grab is unfinished, gated on the lock.
+- Headless mount of the REAL vendored shell against the real host adapter
+  passes 39/39 (groups «Общие»+«Судно», team/devices absent, escaping,
+  theme-persist, en/ru i18n). This substitutes for pixel confirmation of the
+  shell CONTRACT, but is NOT a pixel screenshot.
+
+Owner-GO needs: a free X11 turn to capture `desktop.png` (open Settings, verify
+«Общие» + «Судно» render), OR accept the headless-verified contract + embedded-
+asset proof for this pass.
