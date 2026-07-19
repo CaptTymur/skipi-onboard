@@ -394,7 +394,14 @@
     .settings-section h3 { padding-right:48px; font-size:22px; }
     .setting-row { align-items:flex-start; grid-template-columns:1fr; gap:8px; }
   }
+
+  /* ---- unified @skipi/settings shell overlay (vendored) ---- */
+  .usettings-overlay { display:none; position:fixed; inset:0; z-index:120; background:rgba(15,23,42,.26); }
+  .usettings-overlay.open { display:block; }
+  #settings-root { position:absolute; inset:0; overflow:auto; background:var(--bg); }
 </style>
+<!-- Vendored shared Settings Standard (@skipi/settings 0.3.0). Provenance: skipi-settings 9caeff6. -->
+<link rel="stylesheet" href="./skipi-settings.css">
 </head>
 <body class="launching">
   <div class="modules-bar">
@@ -428,6 +435,13 @@
     </div>
   </div>
 
+  <!-- Unified Settings shell (vendored @skipi/settings). This is the surface the
+       gear opens. The legacy overlay above is retained (still rendered for
+       fallback + regression harnesses) until visual parity is signed off. -->
+  <div class="usettings-overlay" id="unified-settings-overlay">
+    <div id="settings-root"></div>
+  </div>
+
   <div class="plat-strip">
     <b>Skipi platform</b><span class="plat-dot">·</span>
     <span>Seafarer</span><span class="plat-dot">·</span>
@@ -443,6 +457,10 @@
 
 <!-- Local QR encoder (offline, no CDN). Provenance: dist/vendor/README.md -->
 <script src="./vendor/qrcode-generator.js"></script>
+<!-- Vendored shared Settings Standard (@skipi/settings 0.3.0). Provenance: skipi-settings 9caeff6. Exposes window.SkipiSettings.mount. -->
+<script src="./skipi-settings.js"></script>
+<!-- On Board thin host adapter for the vendored shell. Exposes window.OnboardUnifiedSettings. -->
+<script src="./skipi-onboard-settings-host.js"></script>
 <script>
 var APP_VERSION = '0.1.1';
 var APP_BUILD_SHA = 'unknown';
@@ -1500,10 +1518,19 @@ function showSettings(tab){
   var tabs = document.querySelectorAll('.mod-tab');
   for(var i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
   var g = document.getElementById('mb-gear'); if(g) g.classList.add('active');
-  var ov = document.getElementById('settings-overlay'); if(ov) ov.classList.add('open');
+  // Always render the legacy surface into its (now hidden) overlay nodes: this
+  // keeps the regression harnesses green and provides a graceful fallback if the
+  // vendored @skipi/settings shell is unavailable. The legacy overlay is only
+  // SHOWN when the unified shell cannot mount.
   if(crewLive()) crewLoadRoster(); else renderSettings();
+  var opened = false;
+  try { opened = !!(window.OnboardUnifiedSettings && window.OnboardUnifiedSettings.open()); } catch(e){ opened = false; }
+  if(!opened){
+    var ov = document.getElementById('settings-overlay'); if(ov) ov.classList.add('open');
+  }
 }
 function closeSettings(){
+  try { if(window.OnboardUnifiedSettings) window.OnboardUnifiedSettings.close(); } catch(e){}
   var ov = document.getElementById('settings-overlay'); if(ov) ov.classList.remove('open');
   var g = document.getElementById('mb-gear'); if(g) g.classList.remove('active');
   setActiveTab(settingsState.returnTo || currentModule || 'crew');
