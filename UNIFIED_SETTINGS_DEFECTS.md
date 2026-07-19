@@ -83,3 +83,21 @@ What IS verified for the desktop artifact (FACT, non-visual):
 Owner-GO needs: a free X11 turn to capture `desktop.png` (open Settings, verify
 «Общие» + «Судно» render), OR accept the headless-verified contract + embedded-
 asset proof for this pass.
+
+## Android — best-effort, RAN on emulator-5554 (FACT)
+
+Contrary to the prompt's assumption, this home initialised and built cleanly:
+- `cargo tauri android init` succeeded (NDK 27.0.12077973).
+- `cargo tauri android build --apk --debug --target x86_64` produced a universal
+  debug APK containing `lib/x86_64/libapp_lib.so`.
+  Path: `src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk`
+  sha256 `0ff026f1f1b473113588a9dcc0e0ac2b7a11e12a0e780ac5ad60420f1f3c1ae8`.
+- Smoke on `emulator-5554` ONLY (physical `29191FDH2007CD` never touched):
+  `adb -s emulator-5554 install -r` → Success; launcher intent injected;
+  `screencap` → `/tmp/skipi-wave-onboard/mobile.png` (250 KB). The app launches
+  and renders the On Board launch screen («Судовой рабочий стол» / «Открыть
+  Skipi On Board»). Settings/the gear live inside the shell (after entering a
+  vessel), so the unified-shell screen itself was not reached in this quick
+  launcher smoke — but install+launch+render are confirmed FACT.
+- `src-tauri/gen/android/` is git-ignored (`.gitignore: /src-tauri/gen/`) — the
+  generated Android project is intentionally NOT committed, matching repo policy.
