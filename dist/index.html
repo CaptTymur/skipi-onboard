@@ -4,6 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Skipi On Board — United Seafarers</title>
+<script>
+  // Theme boot — runs before first paint. Light is the shipped default (see the
+  // static data-theme="light" on <html>). Only a previously saved, exact 'dark'
+  // choice flips the document to dark; anything else (missing/garbage/'DARK'/
+  // 'system'/'blue') stays light. Persist key: skipi-onboard-theme.
+  (function(){
+    try {
+      var saved = localStorage.getItem('skipi-onboard-theme');
+      document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+    } catch(e){
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
 <style>
   /* Skipi On Board — desktop Apps-only shell.
      Visual family with Skipi Seafarer: light theme by default, petrol accent
@@ -15,8 +29,24 @@
     --accent:#004564; --accent-rgb:0,69,100; --accent-strong:#00384f;
     --accent-bg:rgba(var(--accent-rgb),0.10); --accent-bg2:rgba(var(--accent-rgb),0.22);
     --green:#3f9d6a; --orange:#c9852f;
+    --toast-bg:#1e1e1e;
     --font-ui:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   }
+  /* Dark theme — additive override of the SAME variables (Skipi petrol dark
+     family). Light stays the default; this block only applies when the user has
+     saved 'dark'. Variables only — no selector restructuring. */
+  [data-theme="dark"] {
+    --bg:#0f1726; --surface:#16223a; --surface2:#1e2c48;
+    --text:#e8eefc; --text2:#9fb0cc; --border:#2a3a58; --hover:#1c2a45;
+    --accent:#5fb9e6; --accent-rgb:95,185,230; --accent-strong:#7cc8ef;
+    --accent-bg:rgba(var(--accent-rgb),0.16); --accent-bg2:rgba(var(--accent-rgb),0.30);
+    --green:#4fb37c; --orange:#d99a4a;
+    --toast-bg:#2a3a58;
+    --card:#16223a;
+  }
+  /* --card = the elevated/input surface. Light keeps the original white; dark
+     resolves it through the variable so literal-white surfaces stay readable. */
+  :root, [data-theme="light"] { --card:#ffffff; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { height:100%; }
   body { margin:0; background:var(--bg); color:var(--text); font-family:var(--font-ui);
@@ -98,7 +128,7 @@
   .apps-launch-bar { display:flex; align-items:center; gap:10px; margin:2px 0 16px; }
   .apps-search { flex:1; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border);
     border-radius:9px; padding:0 12px; height:38px; }
-  .apps-search:focus-within { border-color:var(--accent); background:#fff; }
+  .apps-search:focus-within { border-color:var(--accent); background:var(--card); }
   .apps-search-ico { color:var(--text2); font-size:14px; }
   .apps-search input { flex:1; border:0; outline:0; background:transparent; font-size:14px; color:var(--text); font-family:var(--font-ui); }
   .apps-gear-btn { width:38px; height:38px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:9px;
@@ -183,7 +213,7 @@
   .docs-left-head { display:flex; gap:8px; margin-bottom:12px; }
   .docs-search { flex:1; display:flex; align-items:center; gap:8px; background:var(--surface);
     border:1px solid var(--border); border-radius:9px; padding:0 11px; height:36px; }
-  .docs-search:focus-within { border-color:var(--accent); background:#fff; }
+  .docs-search:focus-within { border-color:var(--accent); background:var(--card); }
   .docs-search input { flex:1; border:0; outline:0; background:transparent; font-size:13px; color:var(--text); font-family:var(--font-ui); min-width:0; }
   .docs-add-btn { height:36px; padding:0 12px; border-radius:9px; border:1px solid var(--accent); background:var(--accent);
     color:#fff; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
@@ -203,7 +233,7 @@
   .docs-cat-name { flex:1; font-size:13px; font-weight:800; min-width:0; }
   .docs-cat-n { font-size:11.5px; color:var(--text2); font-weight:700; }
   .docs-caret { font-size:10px; color:var(--text2); }
-  .docs-rows { border-top:1px solid var(--border); background:#fff; }
+  .docs-rows { border-top:1px solid var(--border); background:var(--card); }
   .docs-row { display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border:0; border-top:1px solid var(--border);
     background:transparent; cursor:pointer; text-align:left; font:inherit; color:var(--text); }
   .docs-row:first-child { border-top:0; }
@@ -225,7 +255,7 @@
   .docs-days { font-size:11px; color:var(--text2); }
   .docs-detail-card { border:1px solid var(--border); border-radius:14px; background:var(--surface); padding:18px; }
   .docs-det-head { display:flex; align-items:center; gap:12px; }
-  .docs-title-inp { flex:1; font-size:17px; font-weight:800; color:var(--text); background:#fff; border:1px solid var(--border);
+  .docs-title-inp { flex:1; font-size:17px; font-weight:800; color:var(--text); background:var(--card); border:1px solid var(--border);
     border-radius:9px; padding:9px 12px; min-width:0; font-family:var(--font-ui); }
   .docs-title-inp:focus { outline:none; border-color:var(--accent); }
   .docs-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:14px; }
@@ -234,13 +264,13 @@
   .docs-reg-chip { font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-bg);
     border:1px solid var(--accent-bg2); border-radius:999px; padding:3px 9px; }
   .docs-file { display:flex; gap:12px; align-items:flex-start; border:1px solid var(--border); border-radius:11px;
-    background:#fff; padding:13px; margin-top:14px; }
+    background:var(--card); padding:13px; margin-top:14px; }
   .docs-file-ico { font-size:22px; }
   .docs-file-meta { flex:1; min-width:0; }
   .docs-file-name { font-size:13px; font-weight:700; word-break:break-all; }
   .docs-file-sub { font-size:11.5px; color:var(--text2); margin-top:2px; }
   .docs-file-note { font-size:11.5px; color:var(--text2); margin-top:8px; line-height:1.45; }
-  .docs-drop { border:1.5px dashed var(--border); border-radius:11px; background:#fff; padding:22px 16px;
+  .docs-drop { border:1.5px dashed var(--border); border-radius:11px; background:var(--card); padding:22px 16px;
     margin-top:14px; text-align:center; color:var(--text2); font-size:12.5px; }
   .docs-drop.over { border-color:var(--accent); background:var(--accent-bg); }
   .docs-autosave { font-size:11.5px; color:var(--text2); margin-top:12px; }
@@ -249,7 +279,7 @@
   .docs-stat:hover { border-color:var(--accent); }
   .docs-add-ov { position:fixed; inset:0; z-index:120; background:rgba(15,23,42,.26); display:flex;
     align-items:center; justify-content:center; padding:24px; }
-  .docs-add-card { width:min(440px,92vw); background:#fff; border:1px solid #cfd7df; border-radius:15px;
+  .docs-add-card { width:min(440px,92vw); background:var(--card); border:1px solid var(--border); border-radius:15px;
     padding:20px; box-shadow:0 18px 44px rgba(15,23,42,.14); }
   @media (max-width:900px){ .docs-wrap { grid-template-columns:1fr; } .docs-fields { grid-template-columns:1fr; } }
 
@@ -269,10 +299,10 @@
   .settings-overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(15,23,42,.26);
     align-items:center; justify-content:center; padding:24px; }
   .settings-overlay.open { display:flex; }
-  .settings-modal { position:relative; width:min(980px,92vw); height:min(720px,88vh); background:#fff;
+  .settings-modal { position:relative; width:min(980px,92vw); height:min(720px,88vh); background:var(--card);
     border-radius:18px; display:grid; grid-template-columns:286px minmax(0,1fr); overflow:hidden;
-    box-shadow:0 18px 44px rgba(15,23,42,.14); border:1px solid #cfd7df; }
-  .settings-nav { min-width:0; background:#f1f3f5; border-right:1px solid var(--border);
+    box-shadow:0 18px 44px rgba(15,23,42,.14); border:1px solid var(--border); }
+  .settings-nav { min-width:0; background:var(--surface); border-right:1px solid var(--border);
     padding:18px 14px; overflow-y:auto; }
   .settings-sidebar-head { padding:0 8px 16px; }
   .settings-traffic { display:flex; gap:8px; margin-bottom:22px; }
@@ -283,25 +313,25 @@
   .settings-nav-item { width:100%; min-height:44px; display:grid; grid-template-columns:28px minmax(0,1fr);
     align-items:center; gap:9px; border:0; border-radius:10px; background:transparent; color:var(--text);
     padding:7px 10px; cursor:pointer; text-align:left; font:inherit; }
-  .settings-nav-item:hover { background:#fff; }
-  .settings-nav-item.active { background:#fff; box-shadow:inset 0 0 0 1px var(--border); color:var(--text); }
+  .settings-nav-item:hover { background:var(--card); }
+  .settings-nav-item.active { background:var(--card); box-shadow:inset 0 0 0 1px var(--border); color:var(--text); }
   .settings-nav-item .nav-icon { width:26px; height:26px; border-radius:8px; display:grid; place-items:center;
-    color:var(--accent); background:#fff; border:1px solid var(--border); font-size:12px; font-weight:800; }
+    color:var(--accent); background:var(--card); border:1px solid var(--border); font-size:12px; font-weight:800; }
   .settings-nav-item.active .nav-icon { background:var(--accent); color:#fff; border-color:var(--accent); }
   .settings-nav-item .nav-label { min-width:0; font-size:13px; line-height:1.25; font-weight:650; overflow-wrap:anywhere; }
-  .settings-body { min-width:0; overflow-y:auto; padding:30px 34px; background:#fff; }
+  .settings-body { min-width:0; overflow-y:auto; padding:30px 34px; background:var(--card); }
   .settings-close { position:absolute; top:16px; right:18px; width:32px; height:32px; display:flex; align-items:center;
-    justify-content:center; cursor:pointer; border:1px solid var(--border); border-radius:9px; color:var(--text2); background:#fff; font-size:18px; z-index:101; }
+    justify-content:center; cursor:pointer; border:1px solid var(--border); border-radius:9px; color:var(--text2); background:var(--card); font-size:18px; z-index:101; }
   .settings-close:hover { background:var(--hover); color:var(--text); }
   .set-screen { max-width:680px; }
   .set-sec { margin:0 0 28px; }
   .set-sec-title { font-size:12px; line-height:1.2; font-weight:800; color:var(--text2); text-transform:uppercase; margin:24px 0 8px; }
-  .set-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .set-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
   .settings-section { margin-bottom:28px; }
   .settings-section h3 { font-size:26px; line-height:1.15; font-weight:800; margin:0 0 8px; padding-right:44px; }
   .settings-section .section-desc { font-size:14px; color:var(--text2); line-height:1.45; margin-bottom:22px; max-width:620px; }
   .setting-row { min-height:68px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
-    gap:18px; padding:14px 16px; border-bottom:1px solid var(--border); background:#fff; }
+    gap:18px; padding:14px 16px; border-bottom:1px solid var(--border); background:var(--card); }
   .setting-row:first-of-type { border-radius:14px 14px 0 0; }
   .setting-row:last-of-type { border-bottom:none; border-radius:0 0 14px 14px; }
   .setting-row:only-of-type { border-radius:14px; }
@@ -309,6 +339,11 @@
   .setting-label { font-size:14px; line-height:1.25; font-weight:700; color:var(--text); }
   .setting-desc { font-size:13px; color:var(--text2); margin-top:4px; line-height:1.4; word-break:break-word; }
   .setting-control { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
+  .theme-seg { display:inline-flex; gap:2px; padding:3px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .theme-seg-btn { border:0; background:transparent; color:var(--text2); font:inherit; font-size:12.5px; font-weight:700;
+    padding:6px 14px; border-radius:8px; cursor:pointer; }
+  .theme-seg-btn:hover { color:var(--text); }
+  .theme-seg-btn.active { background:var(--accent); color:#fff; }
   .set-pill { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:3px 9px; border-radius:999px; background:var(--hover); color:var(--text2); }
   .set-pill.warn { background:rgba(201,133,47,.16); color:var(--orange); }
   .set-hint { font-size:12.5px; color:var(--text2); line-height:1.5; }
@@ -328,13 +363,13 @@
   .plat-dot { opacity:.5; }
 
   /* ---- toast ---- */
-  .toast { position:fixed; left:50%; bottom:46px; transform:translateX(-50%); background:var(--text); color:#fff;
+  .toast { position:fixed; left:50%; bottom:46px; transform:translateX(-50%); background:var(--toast-bg); color:#fff;
     border-radius:9px; padding:10px 16px; font-size:13px; max-width:90%; opacity:0; pointer-events:none;
     transition:opacity .18s; z-index:50; }
   .toast.show { opacity:.96; }
 
   /* ---- launch / first-run fork ---- */
-  body.launching { background:#f8fbfc; }
+  body.launching { background:var(--bg); }
   body.launching .modules-bar,
   body.launching .plat-strip { display:none; }
   body.launching main { display:flex; align-items:center; justify-content:center; padding:32px; overflow:auto; }
@@ -348,13 +383,13 @@
   .launch-subtitle { margin-top:12px; font-size:14px; line-height:1.55; color:var(--text2); max-width:330px; }
   .launch-meta { margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; }
   .launch-chip { display:inline-flex; align-items:center; min-height:26px; padding:5px 10px; border-radius:999px;
-    background:#fff; border:1px solid var(--border); color:var(--text2); font-size:11.5px; font-weight:700; }
-  .launch-panel { background:#fff; border:1px solid var(--border); border-radius:15px; padding:24px;
+    background:var(--card); border:1px solid var(--border); color:var(--text2); font-size:11.5px; font-weight:700; }
+  .launch-panel { background:var(--card); border:1px solid var(--border); border-radius:15px; padding:24px;
     box-shadow:0 16px 44px rgba(15,23,42,.08); }
   .launch-panel-title { font-size:21px; line-height:1.2; font-weight:850; color:var(--text); }
   .launch-panel-sub { margin-top:7px; font-size:12.5px; line-height:1.5; color:var(--text2); }
   .launch-actions { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
-  .launch-option { width:100%; text-align:left; border:1px solid var(--border); border-radius:11px; background:#fff;
+  .launch-option { width:100%; text-align:left; border:1px solid var(--border); border-radius:11px; background:var(--card);
     color:var(--text); padding:14px 15px; cursor:pointer; }
   .launch-option:hover { border-color:var(--accent); box-shadow:0 1px 8px rgba(0,0,0,.04); }
   .launch-option.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
@@ -365,7 +400,7 @@
   .launch-note { margin-top:14px; font-size:12px; line-height:1.45; color:var(--text2); }
   .launch-code-form { margin-top:18px; display:flex; flex-direction:column; gap:10px; }
   .launch-code-input { width:100%; font-size:17px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--text); background:#fff; border:1px solid var(--border); border-radius:11px; padding:13px 14px; }
+    color:var(--text); background:var(--card); border:1px solid var(--border); border-radius:11px; padding:13px 14px; }
   .launch-code-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
   .launch-inline-actions { display:flex; gap:10px; flex-wrap:wrap; }
   .launch-back { margin-top:14px; background:transparent; border:none; color:var(--accent); font-size:13px;
@@ -1949,6 +1984,21 @@ function settingsRow(label, desc, control){
     + '<div class="setting-desc">'+desc+'</div></div>'
     + (control?'<div class="setting-control">'+control+'</div>':'') + '</div>';
 }
+// Appearance / Theme switcher — additive settings row. Light is the default;
+// each button routes through applyTheme() (normalize + persist + apply + notify)
+// and re-renders so the active pill follows the current data-theme.
+function renderThemeSetting(){
+  var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  var seg = '<div class="theme-seg" role="group" aria-label="Theme">'
+    + '<button type="button" class="theme-seg-btn'+(cur==='light'?' active':'')+'" data-qa="onboard-theme-light"'
+      + ' aria-pressed="'+(cur==='light')+'" onclick="applyTheme(\'light\'); renderSettings();">Light</button>'
+    + '<button type="button" class="theme-seg-btn'+(cur==='dark'?' active':'')+'" data-qa="onboard-theme-dark"'
+      + ' aria-pressed="'+(cur==='dark')+'" onclick="applyTheme(\'dark\'); renderSettings();">Dark</button>'
+    + '</div>';
+  return settingsRow('Appearance',
+    'Light is the default across the Skipi family. Your choice is saved on this device and survives restarts.',
+    seg);
+}
 function renderSettingsNav(){
   var tab = settingsState.tab || 'vessel';
   var items = [
@@ -2040,6 +2090,7 @@ function renderSettings(){
   } else {
     h += settingsTitle('About Skipi On Board', 'Local desktop shell for vessel-side workflows.');
     h += '<div>';
+    h += renderThemeSetting();
     h += settingsRow('Application', 'Skipi On Board', '');
     h += settingsRow('Version', esc(appVersionLabel()), '<span class="set-pill" data-qa="app-build-sha">'+esc(buildShortSha()||'source')+'</span>');
     h += settingsRow('UI family', 'Settings inherit the shared Skipi desktop Settings Standard: Obsidian-like two-panel modal, #004564 accent, visible paired-devices section, product-specific vessel/workflow sections.', '');
@@ -2435,6 +2486,25 @@ var pluginIntegrity = {};  // id -> { ok:bool, cssText, jsText, reason }
 })();
 var onboardPluginRuntime = window.SkipiOnboardPluginRuntime.create();
 
+// ---------- theme (light by default + persisted user choice) ----------
+// Canon (same as @skipi/settings 1a6748e): light is the shipped default; only a
+// previously saved, exact 'dark' choice flips to dark; the choice persists and
+// survives a restart. The head boot-block applies the saved value before first
+// paint; applyTheme() is the single runtime entry point that normalizes, applies
+// to the document, persists, and notifies host-API subscribers + the active
+// plugin frame. host.theme.get reads data-theme, so it stays in sync.
+var THEME_KEY = 'skipi-onboard-theme';
+var THEME_SUBS = []; // host-API theme.subscribe callbacks (see makeHostApi)
+function normalizeTheme(t){ return t === 'dark' ? 'dark' : 'light'; } // only exact 'dark'
+function applyTheme(t){
+  var theme = normalizeTheme(t);
+  try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
+  document.documentElement.setAttribute('data-theme', theme);
+  for(var i=0;i<THEME_SUBS.length;i++){ try { THEME_SUBS[i](theme); } catch(e){} }
+  try { onboardPluginRuntime.pushTheme(theme); } catch(e){} // reach the mounted plugin
+  return theme;
+}
+
 function bundledPluginIds(){ return Object.keys(BUNDLED_PLUGIN_DIRS).filter(function(id){ return !!SkipiPlugins[id]; }); }
 function isBundledPlugin(id){ return !!(BUNDLED_PLUGIN_DIRS[id] && SkipiPlugins[id]); }
 // Catalog = installable plugins shown to the user. Dev-only fixtures stay
@@ -2787,13 +2857,13 @@ function hostInboxPhotoUrl(pluginId, photo){
 // and are host-mediated: the ONBOARD_TOKEN is never handed to the plugin.
 function makeHostApi(pluginId){
   var ns = 'skipi-plugin:'+pluginId+':';
-  var subs = [];
   return {
     host: { id:'onboard', version:APP_VERSION },
     role: 'vessel',
     theme: {
       get: function(){ return document.documentElement.getAttribute('data-theme') || 'light'; },
-      subscribe: function(cb){ if(typeof cb==='function') subs.push(cb); return function(){ var i=subs.indexOf(cb); if(i>=0) subs.splice(i,1); }; }
+      // subscribe into the shared registry so applyTheme() notifies live plugins
+      subscribe: function(cb){ if(typeof cb==='function') THEME_SUBS.push(cb); return function(){ var i=THEME_SUBS.indexOf(cb); if(i>=0) THEME_SUBS.splice(i,1); }; }
     },
     storage: {
       get: function(k){ try { var v=localStorage.getItem(ns+k); return v==null?null:JSON.parse(v); } catch(e){ return null; } },
