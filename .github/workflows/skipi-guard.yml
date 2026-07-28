@@ -84,15 +84,41 @@ jobs:
           if [[ "$presence_manifest_added" -eq 1 && "$presence_bootstrap_candidate" -eq 1 ]]; then
             OVERRIDE_ARGS=(--override-protected onboard-presence-contracts-bootstrap)
           fi
+          # Declarative task routing — exact mirror of the pinned guard config
+          # task_routing rules (configs/homes/onboard.json, pin 4adc222a) in
+          # the same first-match order as the config: canonical version-bump
+          # (release) is checked BEFORE settings-adopt. Each block only fires
+          # while GUARD_TASK is still the default plugin-host, so the first
+          # matching rule wins, as in the guard binary's resolve_task. The
+          # per-task allowlists are enforced by the pinned guard binary, not
+          # by this workflow.
+          GUARD_TASK="$SKIPI_GUARD_TASK"
+          # canonical version-bump routing — mirror of the pinned rule
+          # "canonical version-bump routing": ALL changed files inside the
+          # 4-file version surface {dist/index.html, src-tauri/Cargo.toml,
+          # src-tauri/Cargo.lock, src-tauri/tauri.conf.json} AND at least one
+          # src-tauri version file changed (require_any_of negative control:
+          # an index.html-only diff never routes here).
+          release_candidate=1
+          release_version_file=0
+          for changed_file in "${GUARD_CHANGED_FILES[@]}"; do
+            case "$changed_file" in
+              src-tauri/Cargo.toml|src-tauri/Cargo.lock|src-tauri/tauri.conf.json)
+                release_version_file=1
+                ;;
+              dist/index.html) ;;
+              *) release_candidate=0 ;;
+            esac
+          done
+          if [[ "$GUARD_TASK" == "plugin-host" && "${#GUARD_CHANGED_FILES[@]}" -gt 0 \
+                && "$release_candidate" -eq 1 && "$release_version_file" -eq 1 ]]; then
+            GUARD_TASK="release"
+          fi
           # settings-adopt routing — exact mirror of the pinned guard config
           # rule (configs/homes/onboard.json "settings-adopt routing", pin
           # 4adc222a): ALL changed files inside the settings-adopt surface AND
           # at least one canonical module file changed (require_any_of negative
-          # control: an index.html-only diff never routes here). Purely
-          # additive: applies only while the task is still the default
-          # plugin-host; the settings-adopt allowlist itself is enforced by
-          # the pinned guard binary, not by this workflow.
-          GUARD_TASK="$SKIPI_GUARD_TASK"
+          # control: an index.html-only diff never routes here).
           settings_adopt_candidate=1
           settings_adopt_module_file=0
           for changed_file in "${GUARD_CHANGED_FILES[@]}"; do
