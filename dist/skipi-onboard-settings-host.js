@@ -16,6 +16,15 @@
  * (this desktop shell has no real device-pairing backend; the legacy honest
  * shell continues to own that story until a real capability exists).
  *
+ * Identity: On Board has NO per-user identity subsystem — the only native
+ * bridge is get_build_info (src-tauri/src/lib.rs), and the crew-config blob
+ * carries api_base / ONBOARD_TOKEN / vessel_imo (a raw bearer token and the
+ * vessel, not a user). So user.id is a REAL install-ID: generated once
+ * (WebCrypto UUID), persisted under LS_INSTALL_ID in this home's settings
+ * storage — never a fixed literal. user.email comes from the persistent
+ * settings blob (profile.email), user-editable in the «Учётная запись»
+ * app-specific section; there is NO fake default.
+ *
  * An On Board «Судно» app-specific section renders vessel data; ALL dynamic
  * values are escaped through ctx.escapeHtml / ctx.escapeAttr at the raw-HTML
  * boundary.
@@ -28,6 +37,7 @@
   var LS_SETTINGS = 'skipi-onboard-settings';
   var LS_THEME = 'skipi-onboard-theme';
   var LS_LANG = 'skipi-onboard-ui-lang';
+  var LS_INSTALL_ID = 'skipi-onboard-install-id';
   var CREW_CONFIG_KEY = 'skipi-onboard-crew-config';
 
   // ---- ported settings.* dictionary (en + ru) — from skipi-settings harness/mock-host.js
@@ -376,6 +386,49 @@
     try { return JSON.parse(lsGet(CREW_CONFIG_KEY) || '{}') || {}; } catch (e) { return {}; }
   }
 
+  // ---- Real install identity ----
+  // On Board has no per-user identity subsystem (only get_build_info on the
+  // native side; crew-config holds a raw vessel-scoped token, not a user).
+  // The honest minimum is a REAL installation identifier: generated exactly
+  // once per install and persisted in this home's settings storage. Never a
+  // fixed literal — 'onboard-local' style placeholders are forbidden.
+  var memoInstallId = null;
+  function generateInstallId() {
+    try {
+      var c = (typeof window !== 'undefined' && window.crypto) || null;
+      if (c && typeof c.randomUUID === 'function') return 'OB-' + c.randomUUID();
+      if (c && typeof c.getRandomValues === 'function') {
+        var b = new Uint8Array(16);
+        c.getRandomValues(b);
+        b[6] = (b[6] & 0x0f) | 0x40; // RFC 4122 v4
+        b[8] = (b[8] & 0x3f) | 0x80;
+        var hex = [];
+        for (var i = 0; i < 16; i += 1) hex.push((b[i] + 0x100).toString(16).slice(1));
+        var h = hex.join('');
+        return 'OB-' + h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+      }
+    } catch (e) {}
+    // Last-resort fallback (no WebCrypto): still unique per install.
+    return 'OB-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+  function installId() {
+    var v = lsGet(LS_INSTALL_ID);
+    if (v) { memoInstallId = v; return v; }
+    if (!memoInstallId) memoInstallId = generateInstallId();
+    lsSet(LS_INSTALL_ID, memoInstallId);
+    return memoInstallId;
+  }
+
+  // Profile email lives in the persistent settings blob (profile.email),
+  // set by the user in the «Учётная запись» section. Empty until set — no
+  // fake default is ever synthesized.
+  function readProfileEmail() {
+    var s = readSettings();
+    var p = s.profile;
+    var e = (p && typeof p === 'object' && !Array.isArray(p)) ? p.email : null;
+    return e == null ? '' : String(e);
+  }
+
   function readSettings() {
     var raw = lsGet(LS_SETTINGS);
     var obj = {};
@@ -463,6 +516,50 @@
       + '</section>';
   }
 
+  // ---- On Board «Учётная запись» app-specific section ----
+  // The unified shell's Profile section is display-only, so this section is
+  // the EDITING surface for the profile email. The value is real persistent
+  // state (settings blob profile.email); empty until the user sets it.
+  function renderAccountSection(ctx) {
+    var esc = ctx.escapeHtml;
+    var escA = ctx.escapeAttr;
+    var lang = readUiLang();
+    var email = readProfileEmail();
+    var L = {
+      group: lang === 'ru' ? 'Профиль пользователя' : 'User profile',
+      email: lang === 'ru' ? 'Электронная почта' : 'Email',
+      hint: lang === 'ru'
+        ? 'Хранится только в настройках этого приложения. Пусто, пока вы не укажете адрес.'
+        : 'Stored only in this app’s settings. Empty until you set it.',
+      save: lang === 'ru' ? 'Сохранить' : 'Save'
+    };
+    return '<section class="skipi-settings__group" data-qa="onboard-unified-account-section">'
+      + '<h3 class="skipi-settings__group-title">' + esc(L.group) + '</h3>'
+      + '<div class="skipi-settings__group-body">'
+      + '<div class="skipi-settings__row">'
+      + '<div class="skipi-settings__row-main">'
+      + '<div class="skipi-settings__row-label">' + esc(L.email) + '</div>'
+      + '<div class="skipi-settings__row-description">' + esc(L.hint) + '</div>'
+      + '</div>'
+      + '<div class="skipi-settings__row-control">'
+      + '<div class="skipi-settings__actions">'
+      + '<input class="skipi-settings__input" type="email" id="onboard-account-email" value="' + escA(email) + '" autocomplete="email">'
+      + '<button type="button" class="skipi-settings__button skipi-settings__button--primary" data-settings-action="onboard-account-save">' + esc(L.save) + '</button>'
+      + '</div></div></div>'
+      + '</div></section>';
+  }
+
+  // Persist the email through ctx.saveSettings (module round-trip: notice,
+  // supplemental reload, redraw) so Profile and the mobile header refresh.
+  function saveAccountEmail(ctx) {
+    var input = document.getElementById('onboard-account-email');
+    var value = input && input.value != null ? String(input.value).replace(/^\s+|\s+$/g, '') : '';
+    var next = readSettings();
+    if (!next.profile || typeof next.profile !== 'object' || Array.isArray(next.profile)) next.profile = {};
+    if (value) next.profile.email = value; else delete next.profile.email;
+    return ctx.saveSettings(next);
+  }
+
   function buildHost() {
     var lang = readUiLang();
     return {
@@ -488,22 +585,48 @@
       t: function (key) { return translate.apply(null, arguments); },
 
       // --- optional profile: vessel entity, NO team ---
+      // user.id = real persisted install-ID (see installId()); user.email =
+      // user-set persistent value (readProfileEmail()). No placeholders.
       getProfile: function () {
         var c = crewConfig();
         var entity = { type: 'vessel' };
         var name = c.vessel_name || (c.vessel_imo ? ('IMO ' + c.vessel_imo) : '');
         if (name) entity.name = String(name);
         if (c.vessel_imo) entity.imo = String(c.vessel_imo);
+        var user = { id: installId() };
+        var email = readProfileEmail();
+        if (email) user.email = email;
         return {
-          user: { id: 'onboard-local' },
+          user: user,
           entity: entity
         };
+      },
+
+      // Mobile-header summary from REAL persistent state only: the selected
+      // vessel (crew-config) and the user-set profile email. Falls back to
+      // the app name — never a fabricated account.
+      getAccountSummary: function () {
+        var c = crewConfig();
+        var name = c.vessel_name || (c.vessel_imo ? ('IMO ' + c.vessel_imo) : '') || 'Skipi On Board';
+        var summary = { displayName: String(name), sectionId: 'profile' };
+        var email = readProfileEmail();
+        if (email) summary.subtitle = email;
+        return summary;
       },
 
       // devices deliberately OMITTED (no real pairing backend in this shell).
       // team deliberately OMITTED (fail-closed): «Команда» stays hidden.
 
       appSpecificSections: [
+        {
+          id: 'onboard-account',
+          order: 650,
+          icon: '✉',
+          label: lang === 'ru' ? 'Учётная запись' : 'Account',
+          description: lang === 'ru' ? 'Email профиля этого приложения.' : 'Profile email for this app.',
+          renderHtml: renderAccountSection,
+          handlers: { 'onboard-account-save': saveAccountEmail }
+        },
         {
           id: 'vessel',
           order: 700,
@@ -519,6 +642,44 @@
 
   var activeInstance = null;
 
+  // ---- System Back (Android) closes the unified overlay ----
+  // Pattern per seafarer b888bf62: the generated WryActivity maps hardware
+  // Back to WebView history — with no history entry canGoBack()=false, so
+  // onBackPressed() backgrounds the whole app. Opening the overlay therefore
+  // pushes ONE marker entry; popping it (system Back -> popstate) closes the
+  // overlay through the app's canonical close path. Every other close path
+  // consumes the marker via one history.back() so phantom entries never
+  // accumulate. On popstate the flag is cleared BEFORE closing, making the
+  // close path's consume step a no-op (no double back(), no re-entrancy).
+  var histMark = false;
+  function pushOverlayHistory() {
+    if (histMark) return;
+    try {
+      if (window.history && typeof window.history.pushState === 'function') {
+        window.history.pushState({ skipiUnifiedSettings: true }, '');
+        histMark = true;
+      }
+    } catch (e) {}
+  }
+  function consumeOverlayHistory() {
+    if (!histMark) return;
+    histMark = false;
+    try {
+      if (window.history && typeof window.history.back === 'function') window.history.back();
+    } catch (e) {}
+  }
+  window.addEventListener('popstate', function () {
+    if (!histMark) return; // not our marker — leave app navigation alone
+    histMark = false;      // our marker entry is the one being popped
+    var overlay = document.getElementById('unified-settings-overlay');
+    if (overlay && overlay.classList.contains('open')) {
+      // Route through the app's canonical close path (clears the gear active
+      // state, restores the previous tab) — same as the shell's own close.
+      try { if (typeof window.closeSettings === 'function') { window.closeSettings(); return; } } catch (e) {}
+      closeUnifiedSettings();
+    }
+  });
+
   // Fresh instance per open; unmount on close. Fail-closed if mount is missing.
   function openUnifiedSettings() {
     var overlay = document.getElementById('unified-settings-overlay');
@@ -531,7 +692,10 @@
     root.innerHTML = '';
     try {
       activeInstance = window.SkipiSettings.mount(root, buildHost(), {
-        mode: 'desktop',
+        // Responsive: the shell picks desktop/mobile from the actual viewport
+        // (Android = mobile layout, not a shrunken desktop).
+        mode: 'auto',
+        breakpoint: 720,
         initialSection: 'profile',
         // The shell renders its own close control when onClose is a function.
         // Route it back through the app's canonical close path.
@@ -545,6 +709,7 @@
       return false;
     }
     overlay.classList.add('open');
+    pushOverlayHistory();
     return true;
   }
 
@@ -557,6 +722,7 @@
     if (overlay) overlay.classList.remove('open');
     var root = document.getElementById('settings-root');
     if (root) root.innerHTML = '';
+    consumeOverlayHistory();
   }
 
   window.OnboardUnifiedSettings = {

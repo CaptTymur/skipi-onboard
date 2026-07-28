@@ -43,17 +43,44 @@ getSettings/saveSettings round-trip all pass (39/39 checks in the vm harness).
    which the shell would reject). The legacy honest "not connected" devices
    shell continues to own that story until a real capability exists.
 
-4. **getProfile.user.id is a static placeholder** (`'onboard-local'`).
-   On Board has no per-user identity in this local shell; the required
-   `user.id` field is filled with a stable local placeholder. The entity
-   (vessel) is the meaningful part and is sourced from
-   `localStorage['skipi-onboard-crew-config']`.
+4. **[CLOSED 2026-07-28] getProfile.user.id is a static placeholder** (`'onboard-local'`).
+   Fixed in phase 2 (see below): user.id is now a real persisted install-ID.
 
 5. **Updater-artifact signing skipped for the local smoke build.**
    `tauri.conf.json` has `createUpdaterArtifacts: true`, which needs
    `TAURI_SIGNING_PRIVATE_KEY`. The deb and AppImage bundles are produced
    BEFORE that signing step; only the (unneeded) updater `.sig` fails. This is
    a local smoke build, not a release — no config change made.
+
+## Phase 2 (2026-07-28, wave 5×2 adoption) — live-confirmed defects CLOSED
+
+All four live-confirmed adoption defects are fixed in
+`dist/skipi-onboard-settings-host.js`, with failing-first coverage in
+`tests/settings_standard_harness.mjs` (RED on candidate bytes 9102071:
+10 targeted failures → GREEN after the fixes; legacy sections stayed GREEN):
+
+1. **[CLOSED] mount mode hardcoded to `'desktop'`** → `mode: 'auto'`,
+   `breakpoint: 720`: Android gets the responsive mobile layout, not a
+   shrunken desktop.
+2. **[CLOSED] `getProfile.user.id` placeholder `'onboard-local'`** → real
+   install identity. On Board has NO per-user identity subsystem (the only
+   native command is `get_build_info`; crew-config carries a vessel-scoped
+   raw token, not a user), so the honest minimum is a stable install-ID:
+   generated once via WebCrypto UUID (`OB-<uuid>`), persisted under
+   `localStorage['skipi-onboard-install-id']`. Profile email comes from the
+   persistent settings blob (`profile.email`), user-editable in the new
+   «Учётная запись» app-specific section — no fake default.
+3. **[CLOSED] `getAccountSummary` missing** (mobile header rendered a bare
+   fallback) → minimal host method from real state only: displayName = the
+   selected vessel from crew-config (fallback: app name), subtitle = the
+   user-set profile email.
+4. **[CLOSED] Android system Back backgrounded the app** → history-marker
+   pattern (per seafarer b888bf62): `pushState({skipiUnifiedSettings:true})`
+   on open, popstate closes through the app's canonical `closeSettings()`
+   path, every other close consumes the marker with exactly one
+   `history.back()`.
+
+Light theme remains the default (guarded by a fresh-install harness check).
 
 ## Desktop VISUAL smoke — BLOCKED (shared X11 resource)
 
