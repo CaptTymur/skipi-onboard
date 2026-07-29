@@ -128,3 +128,55 @@ Contrary to the prompt's assumption, this home initialised and built cleanly:
   launcher smoke — but install+launch+render are confirmed FACT.
 - `src-tauri/gen/android/` is git-ignored (`.gitignore: /src-tauri/gen/`) — the
   generated Android project is intentionally NOT committed, matching repo policy.
+
+## Phase 3 (2026-07-29, post-v0.1.2 Android acceptance) — live defects D2/D5/D1
+
+Base: main e2f4dc4611f346eb853a92a885453f1883f7854d (v0.1.2 released). Live
+evidence: `/home/linux/Developer/builds/onboard-0.1.2/`. Failing-first coverage
+in `tests/settings_standard_harness.mjs`: 7 targeted RED on main bytes
+(3×D2 + 3×D5 + 1×D1) → GREEN after the fixes; all pre-existing checks stayed
+GREEN throughout.
+
+1. **[CLOSED] D2 — top modules-bar edge-to-edge under the status bar/cutout.**
+   On Pixel 6 (cutout 128 px, portrait) the gear and the module tabs were
+   physically un-tappable — the system consumed the touches (`dumpsys insets`
+   confirmed); landscape worked. `viewport-fit=cover` was already declared, but
+   `.modules-bar` used a fixed `height:34px; padding:0 8px` with no safe-area
+   inset. Fix (dist/index.html, progressive enhancement): trailing
+   `height:calc(34px + env(safe-area-inset-top, 0px))` +
+   `padding:env(safe-area-inset-top, 0px) 8px 0` — the bar grows by the inset
+   and pushes tabs+gear below it. Desktop: env() = 0px → render byte-identical;
+   engines without env() drop the invalid declarations and keep the originals.
+   Same mechanism crewing already ships (`.mobile-top`). D3 (rotate relayout)
+   was not chased separately; env() re-resolves on rotation, which may help.
+
+2. **[CLOSED] D5 — mobile header rendered raw JSON before an email was set**
+   (`{"displayName":"Demo vessel","sectionId":"profile"}`). Mechanism (module
+   9caeff6 `mobileProfileHtml`): subtitle resolves via
+   `valueText(summary, ['subtitle','email','description'])`, which falls
+   through to `JSON.stringify(summary)` when none of those keys holds a
+   non-empty string. The host set `subtitle` only when a profile email existed.
+   Fix (dist/skipi-onboard-settings-host.js): `getAccountSummary` ALWAYS
+   returns a non-empty subtitle — the stored email, else the ported catalog's
+   honest «Not connected» / «Не подключено» (reference: shipmgmt 80b9b298
+   `dist/settings-adapter.js`).
+
+3. **[CLOSED for this home] D1 — switching the language reset the theme to
+   light (2× reproduced, desktop too).** Root cause is a host-adapter gap, so
+   it is fixed in this PR; module bytes untouched. Mechanism (module 9caeff6,
+   `dist/skipi-settings.js`): the language handler (line 2119) runs
+   `host.setUiLang` → `reloadExtrasAndDraw()` → `loadSupplemental()`; there
+   line 527 takes `host.getTheme` if present, and line 562 otherwise falls back
+   to `currentThemeFromSettings(state.settings)` — a STALE mount-time snapshot,
+   because the theme click handler (lines 1984–1990) updates only `state.theme`
+   and never `state.settings` (and no `getSettings()` re-read happens on
+   supplemental reloads). So after theme→dark, any language change redrew the
+   surface with `data-theme="light"`. The On Board host OWNS theme persistence
+   (LS_THEME) but did not expose the module's optional `getTheme` capability;
+   broker's host does (its index.html `getTheme`), which is why broker never
+   showed D1. Fix: `getTheme: function () { return readTheme(); }`.
+   **Follow-up for all homes (module-level latent bug, NOT fixed here):** any
+   home whose host adapter lacks `getTheme` has the same defect. A central
+   module candidate fix would be updating `state.settings.appearance.theme`
+   inside the theme handler (or preferring live `state.theme` in the
+   no-getTheme fallback) — that belongs to the shared-module follow-up wave.

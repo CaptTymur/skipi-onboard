@@ -78,6 +78,23 @@ ok(HTML.includes('grid-template-columns:286px minmax(0,1fr)'), 'desktop two-pane
 ok(HTML.includes('.settings-sidebar-head') && HTML.includes('.settings-traffic'), 'sidebar head + traffic dots present');
 ok(HTML.includes('.settings-nav-list'), 'settings nav list style present');
 
+section('static — D2: top modules-bar respects the Android status-bar/cutout (safe-area)');
+{
+  // Live defect D2 (Pixel 6, cutout 128px): the top modules-bar renders
+  // edge-to-edge UNDER the status bar; in portrait the system consumes the
+  // taps, so the gear and the module tabs are physically unreachable. The
+  // bar must grow by env(safe-area-inset-top) and push its content below the
+  // inset (progressive enhancement: env() = 0px on desktop, render unchanged).
+  ok(/viewport-fit=cover/.test(HTML), 'viewport meta declares viewport-fit=cover');
+  const barRule = (HTML.match(/\.modules-bar\s*\{[^}]*\}/) || [''])[0];
+  ok(barRule.includes('env(safe-area-inset-top'),
+    '.modules-bar rule applies env(safe-area-inset-top) (rule: ' + barRule.replace(/\s+/g, ' ').slice(0, 160) + ')');
+  ok(/height\s*:\s*calc\(34px \+ env\(safe-area-inset-top,\s*0px\)\)/.test(barRule),
+    '.modules-bar grows by the top inset (height:calc(34px + env(safe-area-inset-top, 0px)))');
+  ok(/padding\s*:\s*env\(safe-area-inset-top,\s*0px\) 8px 0/.test(barRule),
+    '.modules-bar pushes tabs+gear below the inset (padding-top = env(safe-area-inset-top, 0px))');
+}
+
 section('navigation IA — On Board inherits shared settings structure');
 M.renderSettings();
 let nav = els.get('settings-nav').innerHTML;
@@ -233,6 +250,58 @@ section('unified shell — fix 3: getAccountSummary present (mobile header)');
       'displayName sourced from the real crew-config vessel');
     ok(sum.subtitle === 'master@vessel.example', 'subtitle is the real saved profile email');
     ok(sum.sectionId === 'profile', 'summary links to the profile section');
+  }
+}
+
+section('unified shell — D5: getAccountSummary subtitle ALWAYS non-empty (no raw-JSON mobile header)');
+{
+  // Module 9caeff6 mobileProfileHtml resolves the subtitle via
+  // valueText(summary, ['subtitle','email','description']), which falls
+  // through to JSON.stringify(summary) when none of those keys holds a
+  // non-empty string — i.e. an absent subtitle renders the WHOLE summary as
+  // raw JSON in the mobile header (live defect D5: the header showed
+  // {"displayName":"Demo vessel","sectionId":"profile"} before an email was
+  // set). Reference fix shape: shipmgmt 80b9b298 dist/settings-adapter.js.
+  const h = U._host();
+  const s = h.getSettings();
+  if (s.profile) delete s.profile.email;
+  h.saveSettings(s);
+  const bare = U._host().getAccountSummary();
+  const subtitle = bare.subtitle == null ? '' : String(bare.subtitle);
+  ok(subtitle.length > 0, 'subtitle non-empty WITHOUT a stored email (got ' + JSON.stringify(bare.subtitle) + ')');
+  ok(!/[{}"]/.test(subtitle), 'subtitle carries no raw JSON');
+  ok(subtitle === 'Not connected', "honest fallback is the ported catalog's not-connected value (en)");
+  h.setUiLang('ru');
+  ok(U._host().getAccountSummary().subtitle === 'Не подключено', 'fallback is localized (ru: «Не подключено»)');
+  h.setUiLang('en');
+  // restore the stored email — a real email must still win as the subtitle
+  const s2 = U._host().getSettings();
+  s2.profile = { email: 'master@vessel.example' };
+  U._host().saveSettings(s2);
+  ok(U._host().getAccountSummary().subtitle === 'master@vessel.example', 'stored email still wins as the subtitle');
+}
+
+section('unified shell — D1: host.getTheme exposes the live persisted theme (language change must not reset it)');
+{
+  // Live defect D1: switching the language visibly reset the settings surface
+  // to light. Mechanism: on EVERY supplemental reload (language change →
+  // reloadExtrasAndDraw → loadSupplemental) module 9caeff6 re-resolves the
+  // theme; without host.getTheme it falls back to
+  // currentThemeFromSettings(state.settings) — a STALE mount-time snapshot
+  // (the theme click handler updates only state.theme, never state.settings).
+  // The host owns theme persistence, so it must expose the live value through
+  // the module's optional getTheme capability (broker's host already does).
+  const h = U._host();
+  ok(typeof h.getTheme === 'function', 'host.getTheme is a function (module reads it on every supplemental reload)');
+  if (typeof h.getTheme === 'function') {
+    ok(h.getTheme() === 'light', "fresh getTheme() is 'light' (default preserved)");
+    h.applyTheme('dark');
+    ok(h.getTheme() === 'dark', "getTheme() returns 'dark' right after applyTheme('dark')");
+    h.setUiLang('ru');
+    ok(h.getTheme() === 'dark', 'language change does NOT reset the persisted theme');
+    ok(U._host().getSettings().appearance.theme === 'dark', 'getSettings().appearance.theme stays dark after the language change');
+    h.applyTheme('light');
+    h.setUiLang('en'); // restore defaults for the remaining checks
   }
 }
 

@@ -24,8 +24,17 @@
   ::selection { background:var(--accent-bg2); }
 
   /* ---- top modules bar (shell) ---- */
+  /* Android (edge-to-edge, viewport-fit=cover): the bar must not sit UNDER the
+     status bar / display cutout — the system consumes taps there, making the
+     tabs and the gear unreachable in portrait (defect D2, Pixel 6 cutout).
+     Progressive enhancement: the trailing height/padding declarations grow the
+     bar by env(safe-area-inset-top) and push its content below the inset; on
+     desktop env() = 0px, so the render is unchanged (34px, 0 8px). Engines
+     without env() drop the invalid declarations and keep the originals. */
   .modules-bar { display:flex; align-items:center; height:34px; background:var(--surface);
-    border-bottom:1px solid var(--border); padding:0 8px; gap:2px; flex-shrink:0; }
+    border-bottom:1px solid var(--border); padding:0 8px; gap:2px; flex-shrink:0;
+    height:calc(34px + env(safe-area-inset-top, 0px));
+    padding:env(safe-area-inset-top, 0px) 8px 0; }
   .brand { display:none; }
   .mod-tabs { display:flex; align-items:center; gap:2px; min-width:0; }
   .mod-tab { height:26px; min-width:90px; display:flex; align-items:center; justify-content:center; gap:6px;

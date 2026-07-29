@@ -7,6 +7,9 @@
  *
  *   getSettings / saveSettings  — one JSON blob under LS_SETTINGS
  *   applyTheme                  — sets <html data-theme> AND persists to LS_THEME
+ *   getTheme                    — live persisted theme (module re-reads it on
+ *                                 every supplemental reload; without it the
+ *                                 language switch reset the surface to light)
  *   getUiLang / setUiLang       — LS_LANG ('en' | 'ru')
  *   t(key, ...args)             — minimal lookup over the ported settings.* catalog
  *
@@ -580,6 +583,16 @@
       getSettings: function () { return readSettings(); },
       saveSettings: function (next) { return writeSettings(next); },
       applyTheme: function (theme) { return applyTheme(theme); },
+      // OPTIONAL getTheme — the module re-resolves the theme on EVERY
+      // supplemental reload (language change → reloadExtrasAndDraw →
+      // loadSupplemental). Without this capability it falls back to
+      // currentThemeFromSettings(state.settings) — a STALE mount-time
+      // snapshot (its theme click handler updates only state.theme, never
+      // state.settings), so switching the language visibly reset the surface
+      // to light (live defect D1). This host OWNS theme persistence
+      // (LS_THEME), so it exposes the live value; broker's host ships the
+      // same capability.
+      getTheme: function () { return readTheme(); },
       getUiLang: function () { return readUiLang(); },
       setUiLang: function (next) { var v = normLang(next); lsSet(LS_LANG, v); return v; },
       t: function (key) { return translate.apply(null, arguments); },
@@ -603,15 +616,25 @@
       },
 
       // Mobile-header summary from REAL persistent state only: the selected
-      // vessel (crew-config) and the user-set profile email. Falls back to
-      // the app name — never a fabricated account.
+      // vessel (crew-config) and the user-set profile email. Never a
+      // fabricated account.
+      // FORM CONTRACT (module 9caeff6 mobileProfileHtml): the subtitle is
+      // resolved via valueText(summary, ['subtitle','email','description']),
+      // which falls through to JSON.stringify(summary) when none of those
+      // keys holds a non-empty string — i.e. an absent subtitle renders the
+      // WHOLE summary as raw JSON in the mobile header (live defect D5). The
+      // summary therefore ALWAYS carries a non-empty subtitle; without a
+      // stored email the honest real state is the ported catalog's
+      // «Not connected» (reference: shipmgmt 80b9b298 settings-adapter.js).
       getAccountSummary: function () {
         var c = crewConfig();
         var name = c.vessel_name || (c.vessel_imo ? ('IMO ' + c.vessel_imo) : '') || 'Skipi On Board';
-        var summary = { displayName: String(name), sectionId: 'profile' };
         var email = readProfileEmail();
-        if (email) summary.subtitle = email;
-        return summary;
+        return {
+          displayName: String(name),
+          sectionId: 'profile',
+          subtitle: email || translate('settings.identity.not_connected')
+        };
       },
 
       // devices deliberately OMITTED (no real pairing backend in this shell).
