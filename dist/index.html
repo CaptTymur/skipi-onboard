@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Skipi On Board — United Seafarers</title>
+<title>Skipi On Board · Stack SKIPI-2026.08-R1 — United Seafarers</title>
 <style>
   /* Skipi On Board — desktop Apps-only shell.
      Visual family with Skipi Seafarer: light theme by default, petrol accent
@@ -408,11 +408,14 @@
   .usettings-overlay { display:none; position:fixed; inset:0; z-index:120; background:rgba(15,23,42,.26); }
   .usettings-overlay.open { display:block; }
   #settings-root { position:absolute; inset:0; overflow:auto; background:var(--bg); }
+.desktop-stack-label{position:fixed;right:10px;bottom:8px;z-index:50;padding:4px 8px;border:1px solid #ccc;border-radius:6px;background:#fff;font-size:11px;font-weight:700;pointer-events:none;}
 </style>
 <!-- Vendored shared Settings Standard (@skipi/settings 0.3.0). Provenance: skipi-settings 9caeff6. -->
 <link rel="stylesheet" href="./skipi-settings.css">
 </head>
 <body class="launching">
+<div class="desktop-stack-label" id="desktop-stack-label" data-qa="desktop-stack-label">Skipi On Board · Stack SKIPI-2026.08-R1</div>
+
   <div class="modules-bar">
     <div class="brand">
       <span class="mark">⚓ Skipi On&nbsp;Board</span>
@@ -471,6 +474,21 @@
 <!-- On Board thin host adapter for the vendored shell. Exposes window.OnboardUnifiedSettings. -->
 <script src="./skipi-onboard-settings-host.js"></script>
 <script>
+var APP_BUILD_METADATA={
+    component: 'On Board',
+    component_version: '0.1.4',
+    stack_id: 'SKIPI-2026.08-R1',
+    source_identifier: 'unknown',
+    manifest_url: 'https://api.skipi.app/.well-known/skipi-stack/SKIPI-2026.08-R1.json',
+    verification_status: 'unavailable'
+};
+function stackVerificationState(info){if(info&&info.verification_status==='mismatch')return 'mismatch';return 'unavailable';}
+function stackHeaderLabel(){return 'Skipi '+APP_BUILD_METADATA.component+' · Stack '+APP_BUILD_METADATA.stack_id;}
+function stackVerificationLabel(){return APP_BUILD_METADATA.verification_status==='mismatch'?'Stack mismatch':'Stack verification unavailable';}
+function buildSourceLabel(){return APP_BUILD_METADATA.source_identifier&&APP_BUILD_METADATA.source_identifier!=='unknown'?APP_BUILD_METADATA.source_identifier:'unknown';}
+function stackAboutSummary(){return 'Component '+APP_BUILD_METADATA.component+' '+APP_BUILD_METADATA.component_version+' · Stack '+APP_BUILD_METADATA.stack_id+' · Source '+buildSourceLabel()+' · '+stackVerificationLabel();}
+function setBuildMetadata(info){info=info||{};APP_BUILD_METADATA={component:String(info.component||APP_BUILD_METADATA.component),component_version:String(info.component_version||info.version||APP_BUILD_METADATA.component_version),stack_id:String(info.stack_id||APP_BUILD_METADATA.stack_id),source_identifier:String(info.source_identifier||info.sha||info.short_sha||'unknown'),manifest_url:String(info.manifest_url||APP_BUILD_METADATA.manifest_url),verification_status:stackVerificationState(info)};try{var dh=document.getElementById('desktop-stack-label');if(dh)dh.textContent=stackHeaderLabel();}catch(e){}try{document.title=stackHeaderLabel();}catch(e){}}
+
 var APP_VERSION = '0.1.3';
 var APP_BUILD_SHA = 'unknown';
 function buildShortSha(){
