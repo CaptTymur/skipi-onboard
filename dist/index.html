@@ -2345,7 +2345,10 @@ var SkipiPlugins = (window.SkipiPlugins = window.SkipiPlugins || {});
 // Reviewed bundled artifacts shipped in dist/plugins/<id>/ (loaded at boot).
 var BUNDLED_PLUGIN_DIRS = {
   'onboard-host-check': './plugins/onboard-host-check',
-  'ship-photo-collection': './plugins/ship-photo-collection'
+  'ship-photo-collection': './plugins/ship-photo-collection',
+  'bnwas-time-anchor': './plugins/bnwas-time-anchor',
+  'ecdis-position-reminder': './plugins/ecdis-position-reminder',
+  'navigation-calculators': './plugins/navigation-calculators'
 };
 var activePlugin = null;   // { id } while a plugin is mounted (frame-isolated)
 var pluginCssEl = null;    // (legacy) host-injected stylesheet — unused under isolation
